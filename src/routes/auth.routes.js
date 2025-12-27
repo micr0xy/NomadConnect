@@ -1,15 +1,25 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+const {
+  signup,
+  login,
+  logout,
+  checkauth,
+  googleAuth,
+} = require('../controllers/auth.controller');
+const { verifyToken } = require('../middleware/auth.middleware');
 
-router.get('/testdb', async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT NOW() AS time');
-    res.json({ message: 'Database connected!', time: rows[0].time });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Database connection failed' });
-  }
-});
+/**
+ * Public Routes
+ */
+router.post('/signup', signup);
+router.post('/login', login);
+router.post('/logout', logout);
+router.post('/google', googleAuth);
+
+/**
+ * Protected Routes
+ */
+router.get('/checkauth', verifyToken, checkauth);
 
 module.exports = router;
