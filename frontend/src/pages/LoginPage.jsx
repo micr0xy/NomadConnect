@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
+import { motion } from 'framer-motion'
 import useAuthStore from '../store/authStore'
 import { jwtDecode } from 'jwt-decode'
+import Logo from '../components/Logo'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -76,15 +78,20 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-stone-50 to-nomad-orange-50 flex items-center justify-center px-4">
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md"
+      >
         <div className="bg-white rounded-lg shadow-xl p-8">
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-600 rounded-full mb-4">
-              <span className="text-white font-bold text-lg">NC</span>
+            <div className="inline-flex items-center justify-center mb-4">
+              <Logo className="w-12 h-12" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">NomadConnect</h1>
+            <h1 className="text-3xl font-bold text-gray-900">NOMAD CONNECT</h1>
             <p className="text-gray-600 mt-2">Welcome back</p>
           </div>
 
@@ -106,7 +113,7 @@ export default function LoginPage() {
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nomad-orange-500 focus:border-transparent outline-none transition"
                 placeholder="you@example.com"
                 disabled={isLoading}
               />
@@ -122,7 +129,7 @@ export default function LoginPage() {
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nomad-orange-500 focus:border-transparent outline-none transition"
                 placeholder="••••••••"
                 disabled={isLoading}
               />
@@ -133,12 +140,12 @@ export default function LoginPage() {
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 text-blue-600 rounded border-gray-300"
+                  className="w-4 h-4 text-nomad-orange-600 rounded border-gray-300"
                   disabled={isLoading}
                 />
                 <span className="ml-2 text-sm text-gray-700">Remember me</span>
               </label>
-              <a href="#" className="text-sm text-blue-600 hover:text-blue-700">
+              <a href="#" className="text-sm text-nomad-orange-600 hover:text-nomad-orange-700">
                 Forgot password?
               </a>
             </div>
@@ -147,7 +154,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-nomad-orange-600 text-white py-2 rounded-lg font-semibold hover:bg-nomad-orange-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
             </button>
@@ -181,12 +188,12 @@ export default function LoginPage() {
           {/* Sign Up Link */}
           <p className="mt-8 text-center text-gray-600">
             Don't have an account?{' '}
-            <Link to="/signup" className="text-blue-600 font-semibold hover:text-blue-700">
+            <Link to="/signup" className="text-nomad-orange-600 font-semibold hover:text-nomad-orange-700">
               Sign up here
             </Link>
           </p>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

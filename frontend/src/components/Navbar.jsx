@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { FaBars, FaTimes } from 'react-icons/fa'
 import useAuthStore from '../store/authStore'
+import Logo from './Logo'
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isProfileOpen, setIsProfileOpen] = useState(false)
   const user = useAuthStore((state) => state.user)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const logout = useAuthStore((state) => state.logout)
@@ -15,197 +17,179 @@ export default function Navbar() {
       await logout()
       navigate('/')
       setIsMenuOpen(false)
-      setIsProfileOpen(false)
     } catch (error) {
       console.error('Logout failed:', error)
     }
   }
 
   return (
-    <nav className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+    <motion.nav
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="bg-white/80 backdrop-blur-sm border-b border-stone-200 sticky top-0 z-50"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo and Project Name */}
+        <div className="flex justify-between items-center h-20">
+          {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-              <span className="text-blue-600 font-bold text-lg">NC</span>
-            </div>
-            <span className="text-2xl font-bold hidden sm:inline">NomadConnect</span>
+            <Logo className="w-8 h-8 text-nomad-orange-600" />
+            <span className="text-xl font-bold text-gray-900">NOMAD CONNECT</span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
-            <Link
-              to="/"
-              className="hover:text-blue-200 transition duration-200"
-            >
+          {/* Desktop Navigation Links */}
+          <div className="hidden md:flex items-center space-x-8">
+            <Link to="/" className="text-gray-700 hover:text-nomad-orange-600 transition-colors font-medium">
               Home
             </Link>
-            <Link
-              to="/"
-              className="hover:text-blue-200 transition duration-200"
-            >
+            {/* <a href="/#features" className="text-gray-700 hover:text-nomad-orange-600 transition-colors font-medium">
               Features
-            </Link>
-            <Link
-              to="/"
-              className="hover:text-blue-200 transition duration-200"
-            >
+            </a>
+            <a href="/#how-it-works" className="text-gray-700 hover:text-nomad-orange-600 transition-colors font-medium">
               About
-            </Link>
+            </a> */}
 
             {isAuthenticated && user ? (
-              // User is logged in - Show profile dropdown
-              <div className="relative">
-                <button
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center space-x-2 hover:text-blue-200 transition duration-200"
+              // User is logged in - Show profile icon/dropdown
+              <div className="flex items-center space-x-4">
+                <Link
+                  to="/dashboard"
+                  className="flex items-center space-x-2 text-gray-700 hover:text-nomad-orange-600 transition-colors"
                 >
                   {user?.profileImage ? (
                     <img
                       src={user.profileImage}
                       alt={user.firstName}
-                      className="w-8 h-8 rounded-full object-cover"
+                      className="w-8 h-8 rounded-full object-cover border-2 border-nomad-orange-200"
                     />
                   ) : (
-                    <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-bold text-sm">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-nomad-orange-600 to-nomad-orange-700 flex items-center justify-center border-2 border-nomad-orange-200">
+                      <span className="text-white font-bold text-xs">
                         {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
                       </span>
                     </div>
                   )}
-                  <span className="hidden sm:inline">{user?.firstName}</span>
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                  </svg>
+                  <span className="font-medium">{user?.firstName}</span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 text-gray-700 hover:text-nomad-orange-600 font-medium transition-colors"
+                >
+                  Logout
                 </button>
-
-                {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white text-gray-900 rounded-lg shadow-lg z-50">
-                    <div className="px-4 py-3 border-b border-gray-200">
-                      <p className="font-semibold">{user?.firstName} {user?.lastName}</p>
-                      <p className="text-sm text-gray-500">{user?.email}</p>
-                    </div>
-                    <Link
-                      to="/dashboard"
-                      className="block px-4 py-2 hover:bg-gray-100 transition"
-                      onClick={() => setIsProfileOpen(false)}
-                    >
-                      Dashboard
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100 transition text-red-600 font-semibold"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                )}
               </div>
             ) : (
               // User is not logged in - Show login/signup buttons
-              <>
+              <div className="flex items-center space-x-4">
                 <Link
                   to="/login"
-                  className="px-4 py-2 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition duration-200"
+                  className="px-4 py-2 text-gray-700 hover:text-nomad-orange-600 font-medium transition-colors"
                 >
                   Login
                 </Link>
                 <Link
                   to="/signup"
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-400 transition duration-200"
+                  className="px-6 py-2.5 bg-nomad-orange-600 text-white rounded-full font-semibold hover:bg-nomad-orange-700 transition-colors shadow-md"
                 >
                   Sign Up
                 </Link>
-              </>
+              </div>
             )}
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden inline-flex items-center justify-center p-2 rounded-md hover:bg-blue-700"
+            className="md:hidden p-2 text-gray-700 hover:text-nomad-orange-600 transition-colors"
           >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
+            {isMenuOpen ? <FaTimes className="w-6 h-6" /> : <FaBars className="w-6 h-6" />}
           </button>
         </div>
       </div>
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden bg-blue-700">
-          <div className="px-2 pt-2 pb-3 space-y-1">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="md:hidden bg-white border-t border-stone-200"
+        >
+          <div className="px-4 py-4 space-y-3">
             <Link
               to="/"
-              className="block px-3 py-2 rounded-md hover:bg-blue-600 transition"
+              className="block px-3 py-2 text-gray-700 hover:text-nomad-orange-600 hover:bg-nomad-orange-50 rounded-lg transition-colors font-medium"
               onClick={() => setIsMenuOpen(false)}
             >
               Home
             </Link>
-            <Link
-              to="/"
-              className="block px-3 py-2 rounded-md hover:bg-blue-600 transition"
+            <a
+              href="/#features"
+              className="block px-3 py-2 text-gray-700 hover:text-nomad-orange-600 hover:bg-nomad-orange-50 rounded-lg transition-colors font-medium"
               onClick={() => setIsMenuOpen(false)}
             >
               Features
-            </Link>
-            <Link
-              to="/"
-              className="block px-3 py-2 rounded-md hover:bg-blue-600 transition"
+            </a>
+            <a
+              href="/#how-it-works"
+              className="block px-3 py-2 text-gray-700 hover:text-nomad-orange-600 hover:bg-nomad-orange-50 rounded-lg transition-colors font-medium"
               onClick={() => setIsMenuOpen(false)}
             >
               About
-            </Link>
+            </a>
 
             {isAuthenticated && user ? (
               <>
                 <Link
                   to="/dashboard"
-                  className="block px-3 py-2 rounded-md bg-white text-blue-600 font-semibold hover:bg-blue-50 transition mt-2"
+                  className="block px-3 py-2 text-gray-700 hover:text-nomad-orange-600 hover:bg-nomad-orange-50 rounded-lg transition-colors font-medium"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  Dashboard
+                  <div className="flex items-center space-x-2">
+                    {user?.profileImage ? (
+                      <img
+                        src={user.profileImage}
+                        alt={user.firstName}
+                        className="w-6 h-6 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-nomad-orange-600 to-nomad-orange-700 flex items-center justify-center">
+                        <span className="text-white font-bold text-xs">
+                          {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                    <span>Profile</span>
+                  </div>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left px-3 py-2 rounded-md bg-red-600 text-white font-semibold hover:bg-red-700 transition mt-2"
+                  className="w-full text-left px-3 py-2 text-gray-700 hover:text-nomad-orange-600 hover:bg-nomad-orange-50 rounded-lg transition-colors font-medium"
                 >
                   Logout
                 </button>
               </>
             ) : (
-              <>
+              <div className="space-y-2 pt-2">
                 <Link
                   to="/login"
-                  className="block px-3 py-2 rounded-md bg-white text-blue-600 font-semibold hover:bg-blue-50 transition mt-2"
+                  className="block px-3 py-2 text-center text-gray-700 hover:text-nomad-orange-600 border border-nomad-orange-600 rounded-lg transition-colors font-medium"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Login
                 </Link>
                 <Link
                   to="/signup"
-                  className="block px-3 py-2 rounded-md bg-blue-500 text-white font-semibold hover:bg-blue-400 transition"
+                  className="block px-3 py-2 text-center bg-nomad-orange-600 text-white rounded-lg font-semibold hover:bg-nomad-orange-700 transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Sign Up
                 </Link>
-              </>
+              </div>
             )}
           </div>
-        </div>
+        </motion.div>
       )}
-    </nav>
+    </motion.nav>
   )
 }

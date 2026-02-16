@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
+import { motion } from 'framer-motion'
 import useAuthStore from '../store/authStore'
 import { jwtDecode } from 'jwt-decode'
+import Logo from '../components/Logo'
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -115,15 +117,20 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-stone-50 to-nomad-orange-50 flex items-center justify-center px-4 py-8">
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md"
+      >
         <div className="bg-white rounded-lg shadow-xl p-8">
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-600 rounded-full mb-4">
-              <span className="text-white font-bold text-lg">NC</span>
+            <div className="inline-flex items-center justify-center mb-4">
+              <Logo className="w-12 h-12" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">NomadConnect</h1>
+            <h1 className="text-3xl font-bold text-gray-900">NOMAD CONNECT</h1>
             <p className="text-gray-600 mt-2">Join our community</p>
           </div>
 
@@ -146,7 +153,7 @@ export default function SignupPage() {
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nomad-orange-500 focus:border-transparent outline-none transition"
                 placeholder="John"
                 disabled={isLoading}
               />
@@ -163,7 +170,7 @@ export default function SignupPage() {
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nomad-orange-500 focus:border-transparent outline-none transition"
                 placeholder="Doe"
                 disabled={isLoading}
               />
@@ -180,7 +187,7 @@ export default function SignupPage() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nomad-orange-500 focus:border-transparent outline-none transition"
                 placeholder="you@example.com"
                 disabled={isLoading}
               />
@@ -197,7 +204,7 @@ export default function SignupPage() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nomad-orange-500 focus:border-transparent outline-none transition"
                 placeholder="••••••••"
                 disabled={isLoading}
               />
@@ -215,7 +222,7 @@ export default function SignupPage() {
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nomad-orange-500 focus:border-transparent outline-none transition"
                 placeholder="••••••••"
                 disabled={isLoading}
               />
@@ -229,16 +236,16 @@ export default function SignupPage() {
                   name="acceptTerms"
                   checked={formData.acceptTerms}
                   onChange={handleChange}
-                  className="w-4 h-4 text-blue-600 rounded border-gray-300 mt-1"
+                  className="w-4 h-4 text-nomad-orange-600 rounded border-gray-300 mt-1"
                   disabled={isLoading}
                 />
-                <span className="ml-2 text-sm text-gray-700">
+                <span className="text-sm text-gray-700">
                   I agree to the{' '}
-                  <a href="#" className="text-blue-600 hover:text-blue-700">
-                    Terms & Conditions
+                  <a href="#" className="text-nomad-orange-600 hover:text-nomad-orange-700">
+                    Terms and Conditions
                   </a>{' '}
                   and{' '}
-                  <a href="#" className="text-blue-600 hover:text-blue-700">
+                  <a href="#" className="text-nomad-orange-600 hover:text-nomad-orange-700">
                     Privacy Policy
                   </a>
                 </span>
@@ -249,7 +256,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-nomad-orange-600 text-white py-2 rounded-lg font-semibold hover:bg-nomad-orange-700 transition duration-200 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Creating Account...' : 'Create Account'}
             </button>
@@ -283,12 +290,12 @@ export default function SignupPage() {
           {/* Login Link */}
           <p className="mt-8 text-center text-gray-600">
             Already have an account?{' '}
-            <Link to="/login" className="text-blue-600 font-semibold hover:text-blue-700">
-              Log in here
+            <Link to="/login" className="text-nomad-orange-600 font-semibold hover:text-nomad-orange-700">
+              Login here
             </Link>
           </p>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }
