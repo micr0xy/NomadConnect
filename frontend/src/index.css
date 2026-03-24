@@ -19,6 +19,22 @@
   /* Smooth Scroll */
   html {
     scroll-behavior: smooth;
+    height: 100%;
+    width: 100%;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+  }
+
+  #root {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
   }
 
   /* Custom scrollbar styling */
@@ -43,10 +59,11 @@
   /* Default link colors */
   a {
     transition: color 0.2s ease;
+    color: inherit;
   }
 
-  /* Body defaults */
+  /* Text color */
   body {
-    @apply text-gray-900;
+    color: #111827;
   }
 }

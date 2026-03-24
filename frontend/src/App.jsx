@@ -9,7 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
-import DashboardPage from './pages/DashboardPage'
+import EventsPage from './pages/EventsPage'
 import useAuthStore from './store/authStore'
 
 function AppContent() {
@@ -22,10 +22,11 @@ function AppContent() {
   }, [checkAuth])
 
   return (
-    <>
+    <div className="app-wrapper">
       <Navbar />
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
+      <div className="app-content">
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
           <Route
             path="/"
             element={
@@ -66,23 +67,24 @@ function AppContent() {
             }
           />
           <Route
-            path="/dashboard"
+            path="/events"
             element={
               <ProtectedRoute>
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <DashboardPage />
+                  <EventsPage />
                 </motion.div>
               </ProtectedRoute>
             }
           />
         </Routes>
       </AnimatePresence>
-    </>
+      </div>
+    </div>
   )
 }
 

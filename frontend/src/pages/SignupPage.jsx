@@ -18,14 +18,22 @@ export default function SignupPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
-  const { signup, googleAuth, isAuthenticated } = useAuthStore()
+  const { signup, googleAuth, isAuthenticated, error: storeError, clearError } = useAuthStore()
 
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard')
+      navigate('/events')
     }
   }, [isAuthenticated, navigate])
+
+  // Display store errors
+  useEffect(() => {
+    if (storeError) {
+      setError(storeError)
+      clearError()
+    }
+  }, [storeError, clearError])
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -80,7 +88,7 @@ export default function SignupPage() {
         formData.password,
         formData.confirmPassword
       )
-      navigate('/dashboard')
+      navigate('/events')
     } catch (err) {
       console.error('Signup error:', err)
     } finally {
@@ -102,10 +110,9 @@ export default function SignupPage() {
         decoded.family_name,
         decoded.picture
       )
-      navigate('/dashboard')
+      navigate('/events')
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Google signup failed'
-      setError(errorMessage)
+      // Error is already set by the effect watching storeError
       console.error('Google signup error:', err)
     } finally {
       setIsLoading(false)

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 
@@ -83,13 +83,30 @@ function MapUpdater({ center, zoom }) {
   return null
 }
 
+// Component to handle map click events
+function MapClickHandler({ onMapClick }) {
+  useMapEvents({
+    click(e) {
+      if (onMapClick) {
+        onMapClick({
+          lat: e.latlng.lat,
+          lng: e.latlng.lng,
+        })
+      }
+    },
+  })
+  return null
+}
+
 export default function Map({ 
   center = [27.7172, 85.3240], // Default: Kathmandu, Nepal
   zoom = 13, 
   markers = [],
   height = '100%',
   className = '',
-  showUserLocation = false
+  showUserLocation = false,
+  onMapClick = null,
+  selectedPosition = null,
 }) {
   const [userLocation, setUserLocation] = useState(null)
   const [mapCenter, setMapCenter] = useState(center)
@@ -115,11 +132,11 @@ export default function Map({
   }, [showUserLocation])
 
   return (
-    <div className={`relative ${className}`} style={{ height }}>
+    <div className={`relative w-full h-full ${className}`}>
       <MapContainer
         center={mapCenter}
         zoom={mapZoom}
-        style={{ height: '100%', width: '100%', borderRadius: '8px' }}
+        style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
       >
         {/* Tile Layer - CartoDB Positron (warm, clean style) */}
@@ -129,6 +146,9 @@ export default function Map({
         />
         
         <MapUpdater center={mapCenter} zoom={mapZoom} />
+        
+        {/* Map click handler */}
+        {onMapClick && <MapClickHandler onMapClick={onMapClick} />}
         
         {/* User location marker */}
         {showUserLocation && userLocation && (
@@ -140,6 +160,55 @@ export default function Map({
               <div className="p-2">
                 <h3 className="font-bold text-nomad-teal-600 mb-1">📍 Your Location</h3>
                 <p className="text-sm text-gray-600">You are here</p>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+        
+        {/* Selected location marker for event creation */}
+        {selectedPosition && (
+          <Marker
+            position={[selectedPosition.lat, selectedPosition.lng]}
+            icon={L.divIcon({
+              className: 'selected-location-marker',
+              html: `
+                <div style="
+                  background-color: #3b82f6;
+                  width: 32px;
+                  height: 32px;
+                  border-radius: 50% 50% 50% 0;
+                  transform: rotate(-45deg);
+                  border: 3px solid white;
+                  box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  animation: bounce 1s infinite;
+                ">
+                  <div style="
+                    width: 8px;
+                    height: 8px;
+                    background-color: white;
+                    border-radius: 50%;
+                    transform: rotate(45deg);
+                  "></div>
+                </div>
+                <style>
+                  @keyframes bounce {
+                    0%, 100% { transform: translateY(0) rotate(-45deg); }
+                    50% { transform: translateY(-8px) rotate(-45deg); }
+                  }
+                </style>
+              `,
+              iconSize: [32, 32],
+              iconAnchor: [16, 32],
+              popupAnchor: [0, -32],
+            })}
+          >
+            <Popup>
+              <div className="p-2">
+                <h3 className="font-bold text-blue-600 mb-1">📍 Selected Location</h3>
+                <p className="text-sm text-gray-600">Click to create event</p>
               </div>
             </Popup>
           </Marker>

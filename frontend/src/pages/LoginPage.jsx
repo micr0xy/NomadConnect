@@ -12,12 +12,20 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
-  const { login, googleAuth, isAuthenticated } = useAuthStore()
+  const { login, googleAuth, isAuthenticated, error: storeError, clearError } = useAuthStore()
+
+  // Display store errors
+  useEffect(() => {
+    if (storeError) {
+      setError(storeError)
+      clearError()
+    }
+  }, [storeError, clearError])
 
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard')
+      navigate('/events')
     }
   }, [isAuthenticated, navigate])
 
@@ -41,8 +49,9 @@ export default function LoginPage() {
 
     try {
       await login(email, password)
-      navigate('/dashboard')
+      navigate('/events')
     } catch (err) {
+      // Error is already set by the effect watching storeError
       console.error('Login error:', err)
     } finally {
       setIsLoading(false)
@@ -63,10 +72,9 @@ export default function LoginPage() {
         decoded.family_name,
         decoded.picture
       )
-      navigate('/dashboard')
+      navigate('/events')
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Google login failed'
-      setError(errorMessage)
+      // Error is already set by the effect watching storeError
       console.error('Google login error:', err)
     } finally {
       setIsLoading(false)
