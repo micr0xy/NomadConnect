@@ -46,8 +46,15 @@ export default function SignupPage() {
     setError('')
     setIsLoading(true)
 
+    const normalizedFormData = {
+      ...formData,
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
+      email: formData.email.trim().toLowerCase(),
+    }
+
     // Validation
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!normalizedFormData.firstName || !normalizedFormData.lastName || !normalizedFormData.email || !formData.password || !formData.confirmPassword) {
       setError('Please fill in all fields')
       setIsLoading(false)
       return
@@ -66,7 +73,7 @@ export default function SignupPage() {
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(formData.email)) {
+    if (!emailRegex.test(normalizedFormData.email)) {
       setError('Please enter a valid email')
       setIsLoading(false)
       return
@@ -80,9 +87,9 @@ export default function SignupPage() {
 
     try {
       await signup(
-        formData.firstName,
-        formData.lastName,
-        formData.email,
+        normalizedFormData.firstName,
+        normalizedFormData.lastName,
+        normalizedFormData.email,
         formData.password,
         formData.confirmPassword
       )
@@ -179,6 +186,7 @@ export default function SignupPage() {
               <div>
                 <label className="block text-xs font-semibold text-forest-400/60 mb-2 tracking-wider uppercase">First</label>
                 <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} disabled={isLoading}
+                  autoCapitalize="words" autoCorrect="off" spellCheck={false}
                   className="w-full px-4 py-3 rounded-xl text-white placeholder-forest-600 outline-none text-sm"
                   style={{ background: 'rgba(10,26,13,0.6)', border: '1px solid rgba(58,173,82,0.2)' }}
                   placeholder="John" />
@@ -186,6 +194,7 @@ export default function SignupPage() {
               <div>
                 <label className="block text-xs font-semibold text-forest-400/60 mb-2 tracking-wider uppercase">Last</label>
                 <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} disabled={isLoading}
+                  autoCapitalize="words" autoCorrect="off" spellCheck={false}
                   className="w-full px-4 py-3 rounded-xl text-white placeholder-forest-600 outline-none text-sm"
                   style={{ background: 'rgba(10,26,13,0.6)', border: '1px solid rgba(58,173,82,0.2)' }}
                   placeholder="Doe" />
@@ -195,6 +204,7 @@ export default function SignupPage() {
             <div>
               <label className="block text-xs font-semibold text-forest-400/60 mb-2 tracking-wider uppercase">Email</label>
               <input type="email" name="email" value={formData.email} onChange={handleChange} disabled={isLoading}
+                autoCapitalize="off" autoCorrect="off" spellCheck={false}
                 className="w-full px-4 py-3 rounded-xl text-white placeholder-forest-600 outline-none text-sm"
                 style={{ background: 'rgba(10,26,13,0.6)', border: '1px solid rgba(58,173,82,0.2)' }}
                 placeholder="you@example.com" />

@@ -29,7 +29,11 @@ const setTokenCookie = (res, token) => {
  */
 exports.signup = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, confirmPassword } = req.body;
+    const firstName = String(req.body.firstName || '').trim();
+    const lastName = String(req.body.lastName || '').trim();
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const password = String(req.body.password || '');
+    const confirmPassword = String(req.body.confirmPassword || '');
 
     // Validation
     if (!firstName || !lastName || !email || !password || !confirmPassword) {
@@ -88,6 +92,25 @@ exports.signup = async (req, res) => {
     });
   } catch (error) {
     console.error('Signup error:', error);
+
+    if (error?.code === 11000 && error?.keyPattern?.email) {
+      return res.status(409).json({
+        success: false,
+        message: 'Email already registered',
+      });
+    }
+
+    if (error?.name === 'ValidationError') {
+      const validationMessage = Object.values(error.errors || {})
+        .map((entry) => entry.message)
+        .join(', ') || 'Invalid signup data';
+
+      return res.status(400).json({
+        success: false,
+        message: validationMessage,
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Signup failed',
