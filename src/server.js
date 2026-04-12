@@ -3,6 +3,7 @@ const http = require('http');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const { Server } = require('socket.io');
 require('dotenv').config();
 
@@ -133,7 +134,18 @@ app.use('/api/messages', messagesRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {
-  res.json({ message: 'Server is running', timestamp: new Date() });
+  const dbStateMap = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting',
+  };
+
+  res.json({
+    message: 'Server is running',
+    timestamp: new Date(),
+    db: dbStateMap[mongoose.connection.readyState] || 'unknown',
+  });
 });
 
 // 404 handler
