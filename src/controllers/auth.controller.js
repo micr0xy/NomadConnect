@@ -14,10 +14,11 @@ const generateToken = (userId, userEmail) => {
 // Helper function to set token in cookies
 const setTokenCookie = (res, token) => {
   const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+  const isProduction = process.env.NODE_ENV === 'production';
   res.cookie('token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
     maxAge: maxAge,
   });
 };
@@ -254,11 +255,12 @@ exports.adminLogin = async (req, res) => {
  */
 exports.logout = (req, res) => {
   try {
+    const isProduction = process.env.NODE_ENV === 'production';
     // Clear the token cookie
     res.clearCookie('token', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
     });
 
     res.json({
