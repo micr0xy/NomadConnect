@@ -1,0 +1,14 @@
+.event-category-badge {
+  display: inline-block;
+  border-radius: 9999px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  cursor: default;
+  user-select: none;
+}
+
+.event-category-badge:hover {
+  filter: brightness(0.95);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}

@@ -1,17 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Map from '../components/Map';
 import EventList from '../components/EventList';
+import useAuthStore from '../store/authStore';
 import CreateEventModal from '../components/CreateEventModal';
 import EventDetailPanel from '../components/EventDetailPanel';
 import { listEvents } from '../services/eventsApi';
-import useAuthStore from '../store/authStore';
 import './EventsPage.css';
+import {useEffect, useState} from 'react';
 
 export default function EventsPage() {
-  const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
-  
+  const user = useAuthStore((state) => state.user);
+  const userAvatar = user?.profileImage || '';
+  const userInitials = user ? `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}` : '?';
+
   // State management
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
@@ -19,13 +19,6 @@ export default function EventsPage() {
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-    }
-  }, [isAuthenticated, navigate]);
 
   // Fetch events on page load
   useEffect(() => {
@@ -63,7 +56,7 @@ export default function EventsPage() {
 
   // Handle event created
   const handleEventCreated = (newEvent) => {
-    setEvents([...events, newEvent]);
+    setEvents((prevEvents) => [...prevEvents, newEvent]);
     setSelectedPosition(null);
     // Optional: show success message
     console.log('Event created:', newEvent);
@@ -80,23 +73,19 @@ export default function EventsPage() {
     handleSelectEvent(event);
   };
 
-  if (!isAuthenticated) {
-    return null; // Redirect happening in effect
-  }
-
   return (
     <div className="events-page">
       {/* Header */}
       <div className="events-header">
         <div className="header-content">
+          <span className="header-kicker">Discover</span>
           <h1>Explore Events</h1>
-          <p>Click on the map to create an event, or browse existing events</p>
+          <p>Find nearby meetups or drop a pin to create your own event in seconds.</p>
         </div>
       </div>
 
       {/* Main container */}
       <div className="events-container">
-        {/* Map section */}
         <div className="map-section">
           <Map
             center={[27.7172, 85.324]} // Kathmandu
@@ -105,7 +94,10 @@ export default function EventsPage() {
             height="100%"
             showUserLocation={true}
             onMapClick={handleMapClick}
+            onMarkerClick={handleMarkerClick}
             selectedPosition={selectedPosition}
+            userAvatar={userAvatar}
+            userInitials={userInitials}
           />
         </div>
 
@@ -137,11 +129,16 @@ export default function EventsPage() {
         event={selectedEvent}
         onEventUpdated={(updatedEvent) => {
           // Update the event in the list
-          setEvents(
-            events.map((e) => (e._id === updatedEvent._id ? updatedEvent : e))
+          setEvents((prevEvents) =>
+            prevEvents.map((e) => (e._id === updatedEvent._id ? updatedEvent : e))
           );
           // Update selected event
           setSelectedEvent(updatedEvent);
+        }}
+        onEventDeleted={(deletedEventId) => {
+          setEvents((prevEvents) => prevEvents.filter((e) => e._id !== deletedEventId));
+          setSelectedEvent(null);
+          setDetailsPanelOpen(false);
         }}
       />
     </div>

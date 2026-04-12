@@ -6,6 +6,7 @@ const {
   leaveEvent,
   postMessage,
   getMessages,
+  improveEventDraft,
 } = require('../controllers/events.controller');
 const { verifyToken } = require('../middleware/auth.middleware');
 
@@ -16,6 +17,9 @@ router.post('/', verifyToken, createEvent);
 
 // GET /api/events - Get all events (protected)
 router.get('/', verifyToken, getEvents);
+
+// POST /api/events/nlp/improve - Improve event draft with NLP (protected)
+router.post('/nlp/improve', verifyToken, improveEventDraft);
 
 // POST /api/events/:eventId/join - Join an event (protected)
 router.post('/:eventId/join', verifyToken, joinEvent);

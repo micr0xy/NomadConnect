@@ -10,63 +10,100 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 })
+import EventTooltip from './EventTooltip'
+import './Map.css'
 
-// Custom marker icon with warm colors for events
-const createCustomIcon = () => {
+// Category-based color + emoji mapping
+const categoryConfig = {
+  meetup:    { color: '#3B82F6', emoji: '🤝' },
+  travel:    { color: '#10B981', emoji: '✈️' },
+  adventure: { color: '#F59E0B', emoji: '⛺' },
+  cultural:  { color: '#8B5CF6', emoji: '🎭' },
+  food:      { color: '#EC4899', emoji: '🍜' },
+  sports:    { color: '#EF4444', emoji: '⚽' },
+  other:     { color: '#6B7280', emoji: '📌' },
+}
+
+// Create category-specific marker icon with emoji avatar
+const createCategoryIcon = (category = 'other') => {
+  const cfg = categoryConfig[category] || categoryConfig.other
   return L.divIcon({
-    className: 'custom-marker',
+    className: 'category-marker',
     html: `
       <div style="
-        background-color: #ea580c;
-        width: 32px;
-        height: 32px;
-        border-radius: 50% 50% 50% 0;
-        transform: rotate(-45deg);
-        border: 3px solid white;
-        box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        position: relative;
+        width: 44px;
+        height: 52px;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
+        cursor: pointer;
       ">
+        <!-- Pin bubble -->
         <div style="
-          width: 8px;
-          height: 8px;
-          background-color: white;
-          border-radius: 50%;
-          transform: rotate(45deg);
-        "></div>
+          background: linear-gradient(135deg, ${cfg.color}, ${cfg.color}cc);
+          width: 40px;
+          height: 40px;
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          border: 3px solid white;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <span style="
+            transform: rotate(45deg);
+            font-size: 18px;
+            line-height: 1;
+            display: block;
+          ">${cfg.emoji}</span>
+        </div>
       </div>
     `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -32],
+    iconSize: [44, 52],
+    iconAnchor: [22, 50],
+    popupAnchor: [0, -52],
   })
 }
 
-// Custom marker icon for user location (teal color)
-const createUserLocationIcon = () => {
+// Custom marker icon for user location — shows profile avatar or initials
+const createUserLocationIcon = (avatarUrl = '', initials = '?') => {
+  const inner = avatarUrl
+    ? `<img src="${avatarUrl}" alt="you" style="
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+      " onerror="this.style.display='none';this.parentNode.innerHTML='<span style=\'font-size:14px;font-weight:700;color:#0f766e;\'>${initials}</span>'" />`
+    : `<span style="font-size:14px;font-weight:700;color:#0f766e;">${initials}</span>`
+
   return L.divIcon({
     className: 'user-location-marker',
     html: `
       <div style="
-        background-color: #14b8a6;
-        width: 20px;
-        height: 20px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
-        border: 3px solid white;
-        box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.3), 0 3px 6px rgba(0,0,0,0.3);
-        animation: pulse 2s infinite;
-      "></div>
+        border: 3px solid #14b8a6;
+        box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.35), 0 3px 8px rgba(0,0,0,0.3);
+        background-color: #ccfbf1;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: userPulse 2s infinite;
+      ">${inner}</div>
       <style>
-        @keyframes pulse {
-          0%, 100% { box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.3), 0 3px 6px rgba(0,0,0,0.3); }
-          50% { box-shadow: 0 0 0 8px rgba(20, 184, 166, 0.1), 0 3px 6px rgba(0,0,0,0.3); }
+        @keyframes userPulse {
+          0%, 100% { box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.35), 0 3px 8px rgba(0,0,0,0.3); }
+          50% { box-shadow: 0 0 0 9px rgba(20, 184, 166, 0.1), 0 3px 8px rgba(0,0,0,0.3); }
         }
       </style>
     `,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-    popupAnchor: [0, -10],
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+    popupAnchor: [0, -20],
   })
 }
 
@@ -107,7 +144,11 @@ export default function Map({
   showUserLocation = false,
   onMapClick = null,
   selectedPosition = null,
+  onMarkerClick = null,
+  userAvatar = '',
+  userInitials = '?',
 }) {
+  const [popupOpen, setPopupOpen] = useState(null)
   const [userLocation, setUserLocation] = useState(null)
   const [mapCenter, setMapCenter] = useState(center)
   const [mapZoom, setMapZoom] = useState(zoom)
@@ -154,7 +195,7 @@ export default function Map({
         {showUserLocation && userLocation && (
           <Marker
             position={userLocation}
-            icon={createUserLocationIcon()}
+            icon={createUserLocationIcon(userAvatar, userInitials)}
           >
             <Popup>
               <div className="p-2">
@@ -219,16 +260,27 @@ export default function Map({
           <Marker
             key={marker.id || index}
             position={marker.position}
-            icon={createCustomIcon()}
+            icon={createCategoryIcon(marker.event?.category)}
+            eventHandlers={{
+              click: () => {
+                setPopupOpen(marker.id)
+                if (onMarkerClick) {
+                  onMarkerClick(marker.event)
+                }
+              },
+            }}
           >
-            {marker.popup && (
-              <Popup>
-                <div className="p-2">
-                  <h3 className="font-bold text-gray-900 mb-1">{marker.title}</h3>
-                  {marker.description && (
-                    <p className="text-sm text-gray-600">{marker.description}</p>
-                  )}
-                </div>
+            {popupOpen === marker.id && marker.popup && (
+              <Popup onClose={() => setPopupOpen(null)}>
+                <EventTooltip
+                  event={marker.event}
+                  onViewDetails={() => {
+                    if (onMarkerClick) {
+                      onMarkerClick(marker.event)
+                    }
+                    setPopupOpen(null)
+                  }}
+                />
               </Popup>
             )}
           </Marker>

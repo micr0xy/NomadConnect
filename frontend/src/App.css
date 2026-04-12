@@ -15,6 +15,10 @@
   overflow: hidden;
 }
 
+.app-wrapper.protected-layout {
+  flex-direction: row;
+}
+
 .app-content {
   display: flex;
   flex-direction: column;
@@ -24,6 +28,15 @@
   min-height: 0;
   min-width: 0;
   overflow: hidden;
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.app-content.protected {
+  flex-direction: row;
+  background: transparent;
 }
 
 /* Ensure motion div fills container */
@@ -36,3 +49,38 @@
   min-height: 0;
   min-width: 0;
 }
+
+/* For protected routes with sidebar */
+.app-content.protected > div {
+  display: flex;
+  flex: 1;
+}
+
+/* Desktop layout for sidebar */
+@media (min-width: 768px) {
+  .app-wrapper {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .app-content {
+    flex: 1;
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 767px) {
+  .app-wrapper {
+    flex-direction: column;
+  }
+
+  .app-content {
+    padding-top: 0;
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+

@@ -30,6 +30,20 @@ export const createEvent = async (eventData) => {
 };
 
 /**
+ * Improve event draft with NLP suggestions
+ * POST /api/events/nlp/improve (protected)
+ */
+export const improveEventDraft = async (draft) => {
+  try {
+    const response = await api.post('/api/events/nlp/improve', draft);
+    return response.data.data;
+  } catch (error) {
+    console.error('Error improving event draft:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Failed to improve event draft';
+  }
+};
+
+/**
  * Join an event
  * POST /api/events/:eventId/join (protected)
  * @param {string} eventId - Event ID
@@ -56,6 +70,21 @@ export const leaveEvent = async (eventId) => {
   } catch (error) {
     console.error('Error leaving event:', error.response?.data || error.message);
     throw error.response?.data?.message || 'Failed to leave event';
+  }
+};
+
+/**
+ * Delete an event (creator only)
+ * DELETE /api/events/:eventId (protected)
+ * @param {string} eventId - Event ID
+ */
+export const deleteEvent = async (eventId) => {
+  try {
+    const response = await api.delete(`/api/events/${eventId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting event:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Failed to delete event';
   }
 };
 

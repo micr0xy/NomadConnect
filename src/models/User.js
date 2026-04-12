@@ -41,17 +41,81 @@ const userSchema = new mongoose.Schema(
       enum: ['email', 'google'],
       default: 'email',
     },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
     bio: {
       type: String,
       default: '',
+      maxlength: 400,
     },
     profileImage: {
+      type: String,
+      default: null,
+    },
+    age: {
+      type: Number,
+      default: null,
+      min: 18,
+      max: 120,
+    },
+    location: {
+      type: String,
+      default: '',
+      maxlength: 80,
+    },
+    instagramHandle: {
+      type: String,
+      default: '',
+      maxlength: 40,
+    },
+    travelStyles: {
+      type: [String],
+      default: [],
+    },
+    interests: {
+      type: [String],
+      default: [],
+    },
+    languages: {
+      type: [String],
+      default: [],
+    },
+    countriesVisited: {
+      type: [String],
+      default: [],
+    },
+    upcomingTrips: {
+      type: [String],
+      default: [],
+    },
+    photos: {
+      type: [String],
+      default: [],
+    },
+    coverImage: {
       type: String,
       default: null,
     },
     isVerified: {
       type: Boolean,
       default: false,
+    },
+    followers: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: 'User',
+      default: [],
+    },
+    following: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: 'User',
+      default: [],
     },
   },
   {

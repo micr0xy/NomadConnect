@@ -1,0 +1,77 @@
+.protected-layout {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  background: #f9fafb;
+  gap: 0;
+  min-height: 0;
+}
+
+.protected-main-content {
+  flex: 1;
+  overflow-y: auto;
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+  margin-left: 0;
+  min-height: 0;
+  min-width: 0;
+  position: relative;
+}
+
+.protected-header-notifications {
+  position: fixed;
+  top: 18px;
+  right: 24px;
+  z-index: 1000;
+  pointer-events: none;
+  padding: 6px;
+}
+
+.protected-header-notifications .notification-icon-wrapper {
+  pointer-events: auto;
+}
+
+/* Mobile Styles */
+@media (max-width: 767px) {
+  .protected-main-content {
+    width: 100%;
+    height: 100%;
+  }
+
+  .protected-header-notifications {
+    top: 14px;
+    right: 14px;
+    padding: 4px;
+  }
+}
+
+/* Motion div inside protected main content */
+.protected-main-content > div:not(.protected-header-notifications) {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Scrollbar Styling */
+.protected-main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.protected-main-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.protected-main-content::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.protected-main-content::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

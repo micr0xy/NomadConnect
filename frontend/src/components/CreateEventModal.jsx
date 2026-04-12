@@ -1,11 +1,22 @@
 import React, { useState } from 'react';
-import { createEvent } from '../services/eventsApi';
+import { createEvent, improveEventDraft } from '../services/eventsApi';
 import './CreateEventModal.css';
+
+const EVENT_CATEGORIES = [
+  { id: 'meetup', label: 'Meetup' },
+  { id: 'travel', label: 'Travel' },
+  { id: 'adventure', label: 'Adventure' },
+  { id: 'cultural', label: 'Cultural' },
+  { id: 'food', label: 'Food' },
+  { id: 'sports', label: 'Sports' },
+  { id: 'other', label: 'Other' },
+];
 
 const CreateEventModal = ({ isOpen, onClose, selectedPosition, onEventCreated }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    category: '',
     date: '',
     time: '',
     maxParticipants: '',
@@ -13,6 +24,8 @@ const CreateEventModal = ({ isOpen, onClose, selectedPosition, onEventCreated })
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [improving, setImproving] = useState(false);
+  const [nlpSuggestions, setNlpSuggestions] = useState([]);
   const [serverError, setServerError] = useState('');
 
   if (!isOpen) return null;
@@ -33,6 +46,40 @@ const CreateEventModal = ({ isOpen, onClose, selectedPosition, onEventCreated })
     setServerError('');
   };
 
+  const handleImproveDraft = async () => {
+    setServerError('');
+
+    if (!formData.title.trim() && !formData.description.trim()) {
+      setServerError('Add a title or description before improving with AI.');
+      return;
+    }
+
+    setImproving(true);
+    try {
+      const improved = await improveEventDraft({
+        title: formData.title,
+        description: formData.description,
+        category: formData.category || 'other',
+        date: formData.date,
+        time: formData.time,
+        maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants, 10) : null,
+        latitude: selectedPosition?.lat,
+        longitude: selectedPosition?.lng,
+      });
+
+      setFormData((prev) => ({
+        ...prev,
+        title: improved?.title || prev.title,
+        description: improved?.description || prev.description,
+      }));
+      setNlpSuggestions(improved?.suggestions || []);
+    } catch (error) {
+      setServerError(error || 'Failed to improve draft. Please try again.');
+    } finally {
+      setImproving(false);
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -44,6 +91,10 @@ const CreateEventModal = ({ isOpen, onClose, selectedPosition, onEventCreated })
 
     if (!formData.date) {
       newErrors.date = 'Date is required';
+    }
+
+    if (!formData.category) {
+      newErrors.category = 'Category is required';
     }
 
     if (!formData.time) {
@@ -90,6 +141,7 @@ const CreateEventModal = ({ isOpen, onClose, selectedPosition, onEventCreated })
       const eventData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
+        category: formData.category,
         startTime: startTimeISO,
         location: {
           lng: selectedPosition.lng,
@@ -104,10 +156,12 @@ const CreateEventModal = ({ isOpen, onClose, selectedPosition, onEventCreated })
       setFormData({
         title: '',
         description: '',
+        category: '',
         date: '',
         time: '',
         maxParticipants: '',
       });
+      setNlpSuggestions([]);
 
       // Notify parent
       if (onEventCreated) {
@@ -167,6 +221,47 @@ const CreateEventModal = ({ isOpen, onClose, selectedPosition, onEventCreated })
               rows="3"
               disabled={loading}
             />
+          </div>
+
+          <div className="nlp-actions">
+            <button
+              type="button"
+              className="btn-improve"
+              onClick={handleImproveDraft}
+              disabled={loading || improving}
+            >
+              {improving ? 'Improving...' : 'Improve with AI'}
+            </button>
+            <span className="nlp-hint">NLP rewrite for clearer and more engaging copy</span>
+          </div>
+
+          {nlpSuggestions.length > 0 && (
+            <div className="nlp-suggestions">
+              {nlpSuggestions.map((suggestion) => (
+                <p key={suggestion} className="nlp-suggestion-item">• {suggestion}</p>
+              ))}
+            </div>
+          )}
+
+          <div className="form-group">
+            <label htmlFor="category">
+              Category <span className="required">*</span>
+            </label>
+            <select
+              id="category"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              disabled={loading}
+            >
+              <option value="">Select category</option>
+              {EVENT_CATEGORIES.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.label}
+                </option>
+              ))}
+            </select>
+            {errors.category && <p className="error">{errors.category}</p>}
           </div>
 
           <div className="form-row">

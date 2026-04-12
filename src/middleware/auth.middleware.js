@@ -1,9 +1,12 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
-const verifyToken = (req, res, next) => {
+const verifyToken = async (req, res, next) => {
   try {
-    // Get token from cookies
-    const token = req.cookies.token;
+    const cookieToken = req.cookies?.token;
+    const authHeader = req.headers.authorization || '';
+    const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    const token = cookieToken || bearerToken;
 
     if (!token) {
       return res.status(401).json({
@@ -15,9 +18,25 @@ const verifyToken = (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Attach user id to request
+    const user = await User.findById(decoded.id).select('email role isBlocked');
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is blocked by admin',
+      });
+    }
+
+    // Attach user info to request
     req.userId = decoded.id;
-    req.userEmail = decoded.email;
+    req.userEmail = user.email;
+    req.userRole = user.role || 'user';
 
     next();
   } catch (error) {
@@ -43,4 +62,15 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-module.exports = { verifyToken };
+const verifyAdmin = (req, res, next) => {
+  if (req.userRole !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Admin access required',
+    });
+  }
+
+  return next();
+};
+
+module.exports = { verifyToken, verifyAdmin };

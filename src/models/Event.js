@@ -13,11 +13,23 @@ const eventSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    category: {
+      type: String,
+      required: [true, 'Event category is required'],
+      enum: ['meetup', 'travel', 'adventure', 'cultural', 'food', 'sports', 'other'],
+      lowercase: true,
+      trim: true,
+    },
     startTime: {
       type: Date,
       required: [true, 'Event start time is required'],
       validate: {
         validator: function (value) {
+          // Only enforce future-date check when startTime is created/edited,
+          // not when unrelated fields (e.g., participants) are updated.
+          if (!this.isModified('startTime')) {
+            return true;
+          }
           return value > new Date();
         },
         message: 'Event start time must be in the future',

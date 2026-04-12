@@ -1,95 +1,80 @@
 import React, { useEffect, useState } from 'react';
-import { joinEvent, leaveEvent, sendMessage, getMessages } from '../services/eventsApi';
+import { useNavigate } from 'react-router-dom';
+import { MdChat } from 'react-icons/md';
+import { motion } from 'framer-motion';
+import { joinEvent, leaveEvent, deleteEvent } from '../services/eventsApi';
 import useAuthStore from '../store/authStore';
-import ChatWindow from './ChatWindow';
-import ChatInput from './ChatInput';
 import './EventDetailPanel.css';
 
-const EventDetailPanel = ({ isOpen, onClose, event, onEventUpdated }) => {
-  const userEmail = useAuthStore((state) => state.userEmail);
-  const userName = useAuthStore((state) => state.userName);
+const EventDetailPanel = ({ isOpen, onClose, event, onEventUpdated, onEventDeleted }) => {
+  const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const userEmail = user?.email || '';
+  const isAdmin = user?.role === 'admin';
   
   const [isUserParticipant, setIsUserParticipant] = useState(false);
-  const [messages, setMessages] = useState([]);
-  const [isLoadingChat, setIsLoadingChat] = useState(false);
-  const [isSendingMessage, setIsSendingMessage] = useState(false);
-  const [chatError, setChatError] = useState('');
-  const [pollInterval, setPollInterval] = useState(null);
-
-  if (!isOpen || !event) return null;
+  const [isCreator, setIsCreator] = useState(false);
+  const [error, setError] = useState('');
 
   // Check if current user is a participant
   useEffect(() => {
-    if (event?.participants && userEmail) {
-      const isParticipant = event.participants.some((p) => p.userEmail === userEmail);
-      setIsUserParticipant(isParticipant);
+    if (event && userEmail) {
+      const normalizedUserEmail = userEmail.toLowerCase();
+      const participants = Array.isArray(event.participants) ? event.participants : [];
+      const isParticipant = participants.some(
+        (p) => ((p.userEmail || p.email || '').toLowerCase() === normalizedUserEmail)
+      );
+      const creator = (event.createdByEmail || '').toLowerCase() === normalizedUserEmail;
+      setIsCreator(creator);
+      setIsUserParticipant(isParticipant || creator);
+    } else {
+      setIsUserParticipant(false);
+      setIsCreator(false);
     }
   }, [event, userEmail]);
 
-  // Fetch messages periodically (polling)
-  useEffect(() => {
-    if (!isOpen || !event?._id) return;
-
-    const fetchMessages = async () => {
-      try {
-        setIsLoadingChat(true);
-        setChatError('');
-        const fetchedMessages = await getMessages(event._id);
-        setMessages(fetchedMessages);
-      } catch (error) {
-        console.error('Error fetching messages:', error);
-        setChatError(typeof error === 'string' ? error : 'Failed to load messages');
-      } finally {
-        setIsLoadingChat(false);
-      }
-    };
-
-    // Fetch immediately
-    fetchMessages();
-
-    // Set up polling every 3 seconds
-    const interval = setInterval(fetchMessages, 3000);
-    setPollInterval(interval);
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isOpen, event?._id]);
-
   const handleJoinEvent = async () => {
     try {
-      setChatError('');
+      setError('');
       const updatedEvent = await joinEvent(event._id);
       setIsUserParticipant(true);
       if (onEventUpdated) onEventUpdated(updatedEvent);
     } catch (error) {
-      setChatError(typeof error === 'string' ? error : 'Failed to join event');
+      setError(typeof error === 'string' ? error : 'Failed to join event');
     }
   };
 
   const handleLeaveEvent = async () => {
     try {
-      setChatError('');
+      setError('');
       const updatedEvent = await leaveEvent(event._id);
       setIsUserParticipant(false);
-      setMessages([]);
       if (onEventUpdated) onEventUpdated(updatedEvent);
     } catch (error) {
-      setChatError(typeof error === 'string' ? error : 'Failed to leave event');
+      setError(typeof error === 'string' ? error : 'Failed to leave event');
     }
   };
 
-  const handleSendMessage = async (text) => {
+  const handleViewChat = () => {
+    navigate(`/events/${event._id}/chat`);
+    onClose();
+  };
+
+  const handleDeleteEvent = async () => {
+    const confirmed = window.confirm('Delete this event and all its chat messages? This cannot be undone.');
+    if (!confirmed) {
+      return;
+    }
+
     try {
-      setIsSendingMessage(true);
-      setChatError('');
-      await sendMessage(event._id, text, userName);
-      // Message will appear on next poll
-    } catch (error) {
-      setChatError(typeof error === 'string' ? error : 'Failed to send message');
-      throw error;
-    } finally {
-      setIsSendingMessage(false);
+      setError('');
+      await deleteEvent(event._id);
+      if (onEventDeleted) {
+        onEventDeleted(event._id);
+      }
+      onClose();
+    } catch (deleteError) {
+      setError(typeof deleteError === 'string' ? deleteError : 'Failed to delete event');
     }
   };
 
@@ -112,9 +97,17 @@ const EventDetailPanel = ({ isOpen, onClose, event, onEventUpdated }) => {
 
   const participantCount = event?.participants?.length || 0;
 
+  if (!isOpen || !event) return null;
+
   return (
     <div className="detail-panel-overlay">
-      <div className={`detail-panel ${isOpen ? 'open' : ''}`}>
+      <motion.div
+        className={`detail-panel ${isOpen ? 'open' : ''}`}
+        initial={{ x: 400, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        exit={{ x: 400, opacity: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <div className="detail-header">
           <h2>{event.title}</h2>
           <button className="detail-close" onClick={onClose}>
@@ -162,39 +155,65 @@ const EventDetailPanel = ({ isOpen, onClose, event, onEventUpdated }) => {
             </div>
           )}
 
-          {/* Join/Leave Button */}
+          {/* Action Buttons */}
           <div className="detail-actions">
-            {!isUserParticipant ? (
-              <button className="btn-join" onClick={handleJoinEvent}>
-                Join Event
-              </button>
-            ) : (
-              <button className="btn-leave" onClick={handleLeaveEvent}>
-                Leave Event
-              </button>
-            )}
+            <div className="action-buttons">
+              {!isUserParticipant ? (
+                <motion.button
+                  className="btn-join"
+                  onClick={handleJoinEvent}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Join Event
+                </motion.button>
+              ) : (
+                <>
+                  <motion.button
+                    className="btn-chat"
+                    onClick={handleViewChat}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <MdChat size={18} />
+                    View Chat
+                  </motion.button>
+                  <motion.button
+                    className="btn-leave"
+                    onClick={handleLeaveEvent}
+                    disabled={isCreator}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {isCreator ? 'Host cannot leave' : 'Leave Event'}
+                  </motion.button>
+                </>
+              )}
+
+              {(isCreator || isAdmin) && (
+                <motion.button
+                  className="btn-leave"
+                  onClick={handleDeleteEvent}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Delete Event
+                </motion.button>
+              )}
+            </div>
           </div>
 
-          {/* Chat Section - Only visible to participants */}
-          {isUserParticipant && (
-            <div className="chat-section">
-              <h3>💬 Group Chat</h3>
-              <ChatWindow messages={messages} userEmail={userEmail} />
-              <ChatInput
-                onSendMessage={handleSendMessage}
-                isLoading={isSendingMessage}
-                userName={userName}
-              />
-            </div>
-          )}
-
-          {chatError && (
-            <div className="error-banner">
-              {chatError}
-            </div>
+          {error && (
+            <motion.div
+              className="error-banner"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              {error}
+            </motion.div>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

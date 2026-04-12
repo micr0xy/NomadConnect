@@ -5,15 +5,25 @@
 @tailwind utilities;
 
 @layer base {
-  /* CSS Custom Properties for color palette */
+  /* ── Nature theme CSS variables ── */
   :root {
-    --nomad-orange-50: #fff7ed;
+    --forest-950: #0a1a0d;
+    --forest-900: #0f2d14;
+    --forest-800: #1a4522;
+    --forest-700: #1e6b2e;
+    --forest-500: #3aad52;
+    --forest-400: #4ade80;
+    --moss-600:   #4a7a34;
+    --moss-400:   #7ab860;
+    --earth-600:  #a8611e;
+    --earth-400:  #d4943a;
+    --cream-100:  #fdf8ee;
+    --cream-200:  #f8f0d8;
+    /* kept for dashboard/auth pages */
     --nomad-orange-600: #ea580c;
     --nomad-orange-700: #c2410c;
-    --nomad-teal-500: #14b8a6;
-    --nomad-teal-600: #0d9488;
-    --sunset-600: #dc2626;
-    --sunset-700: #b91c1c;
+    --nomad-teal-500:   #14b8a6;
+    --nomad-teal-600:   #0d9488;
   }
 
   /* Smooth Scroll */
@@ -28,6 +38,8 @@
     padding: 0;
     height: 100%;
     width: 100%;
+    font-family: 'DM Sans', Inter, system-ui, sans-serif;
+    color: #111827;
   }
 
   #root {
@@ -37,33 +49,42 @@
     width: 100%;
   }
 
-  /* Custom scrollbar styling */
-  ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
+  /* Nature-themed scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #f0fdf4; }
+  ::-webkit-scrollbar-thumb { background: #3aad52; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #2d8a40; }
 
-  ::-webkit-scrollbar-track {
-    background: #f5f5f4;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #ea580c;
-    border-radius: 5px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #c2410c;
-  }
-
-  /* Default link colors */
   a {
     transition: color 0.2s ease;
     color: inherit;
   }
+}
 
-  /* Text color */
-  body {
-    color: #111827;
+/* ── Landing page specific utilities ── */
+@layer utilities {
+  .font-display {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+  }
+
+  /* Grain texture overlay */
+  .grain-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Marquee animation */
+  .marquee-track {
+    display: flex;
+    animation: marquee-scroll 25s linear infinite;
+  }
+
+  @keyframes marquee-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
   }
 }

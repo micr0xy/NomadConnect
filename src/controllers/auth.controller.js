@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const { createFollowNotification } = require('./notification.controller');
 
 // Helper function to generate JWT token
 const generateToken = (userId, userEmail) => {
@@ -101,6 +102,7 @@ exports.signup = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = String(email || '').toLowerCase();
 
     // Validation
     if (!email || !password) {
@@ -111,7 +113,24 @@ exports.login = async (req, res) => {
     }
 
     // Find user (include password field for comparison)
-    const user = await User.findOne({ email }).select('+passwordHash');
+    const adminEmail = (process.env.ADMIN_EMAIL || 'admin@nomadconnect.com').toLowerCase();
+    const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@12345';
+
+    let user = await User.findOne({ email: normalizedEmail }).select('+passwordHash');
+
+    if (!user && normalizedEmail === adminEmail && password === adminPassword) {
+      user = await User.create({
+        firstName: 'Admin',
+        lastName: 'User',
+        email: adminEmail,
+        passwordHash: adminPassword,
+        authProvider: 'email',
+        role: 'admin',
+        isBlocked: false,
+      });
+
+      user = await User.findOne({ email: adminEmail }).select('+passwordHash');
+    }
 
     if (!user) {
       return res.status(401).json({
@@ -120,13 +139,28 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Check password
-    const passwordMatches = await user.matchPassword(password);
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is blocked by admin',
+      });
+    }
+
+    const isEnvAdminLogin = normalizedEmail === adminEmail && password === adminPassword;
+
+    // Check password (or allow env admin credential override)
+    const passwordMatches = isEnvAdminLogin ? true : await user.matchPassword(password);
     if (!passwordMatches) {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password',
       });
+    }
+
+    if (isEnvAdminLogin && user.role !== 'admin') {
+      user.role = 'admin';
+      user.isBlocked = false;
+      await user.save();
     }
 
     // Generate JWT token
@@ -149,6 +183,66 @@ exports.login = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Login failed',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * ADMIN LOGIN - Authenticate admin via credentials from env
+ * POST /api/auth/admin/login
+ */
+exports.adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide email and password',
+      });
+    }
+
+    const adminEmail = (process.env.ADMIN_EMAIL || 'admin@nomadconnect.com').toLowerCase();
+    const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@12345';
+
+    if (email.toLowerCase() !== adminEmail || password !== adminPassword) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid admin credentials',
+      });
+    }
+
+    let user = await User.findOne({ email: adminEmail });
+    if (!user) {
+      user = await User.create({
+        firstName: 'Admin',
+        lastName: 'User',
+        email: adminEmail,
+        passwordHash: adminPassword,
+        authProvider: 'email',
+        role: 'admin',
+      });
+    } else if (user.role !== 'admin') {
+      user.role = 'admin';
+      user.isBlocked = false;
+      await user.save();
+    }
+
+    const token = generateToken(user._id, user.email);
+    setTokenCookie(res, token);
+
+    return res.json({
+      success: true,
+      message: 'Admin login successful',
+      user: user.toJSON(),
+      token,
+    });
+  } catch (error) {
+    console.error('Admin login error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Admin login failed',
       error: error.message,
     });
   }
@@ -214,6 +308,68 @@ exports.checkauth = async (req, res) => {
 };
 
 /**
+ * GET PUBLIC PROFILE BY EMAIL - Return safe profile fields for profile visit pages
+ * GET /api/auth/profile/by-email/:email
+ * Protected route - requires valid token
+ */
+exports.getPublicProfileByEmail = async (req, res) => {
+  try {
+    const profileEmail = decodeURIComponent(String(req.params.email || '')).toLowerCase().trim();
+
+    if (!profileEmail) {
+      return res.status(400).json({
+        success: false,
+        message: 'Profile email is required',
+      });
+    }
+
+    const user = await User.findOne({ email: profileEmail });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const publicProfile = {
+      _id: user._id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      bio: user.bio,
+      profileImage: user.profileImage,
+      age: user.age,
+      location: user.location,
+      instagramHandle: user.instagramHandle,
+      travelStyles: user.travelStyles,
+      interests: user.interests,
+      languages: user.languages,
+      countriesVisited: user.countriesVisited,
+      upcomingTrips: user.upcomingTrips,
+      photos: user.photos,
+      isVerified: user.isVerified,
+      coverImage: user.coverImage,
+      followers: user.followers || [],
+      following: user.following || [],
+      followersCount: (user.followers || []).length,
+      followingCount: (user.following || []).length,
+    };
+
+    return res.json({
+      success: true,
+      user: publicProfile,
+    });
+  } catch (error) {
+    console.error('Get public profile error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch profile',
+      error: error.message,
+    });
+  }
+};
+
+/**
  * GOOGLE AUTH - Handle Google OAuth signup/login
  * POST /api/auth/google
  */
@@ -272,6 +428,349 @@ exports.googleAuth = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Google authentication failed',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * UPDATE PROFILE - Update editable profile fields
+ * PUT /api/auth/profile
+ * Protected route - requires valid token in cookies
+ */
+exports.updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const {
+      firstName,
+      lastName,
+      bio,
+      profileImage,
+      coverImage,
+      profileTheme,
+      age,
+      location,
+      instagramHandle,
+      travelStyles,
+      interests,
+      languages,
+      countriesVisited,
+      upcomingTrips,
+      photos,
+    } = req.body;
+
+    const normalizeStringArray = (value, maxItems = 12) => {
+      if (!Array.isArray(value)) {
+        return undefined;
+      }
+
+      return [...new Set(value
+        .map((item) => String(item || '').trim())
+        .filter(Boolean))]
+        .slice(0, maxItems);
+    };
+
+    if (firstName !== undefined) {
+      user.firstName = String(firstName).trim() || user.firstName;
+    }
+
+    if (lastName !== undefined) {
+      user.lastName = String(lastName).trim() || user.lastName;
+    }
+
+    if (bio !== undefined) {
+      user.bio = String(bio).trim().slice(0, 400);
+    }
+
+    if (profileImage !== undefined) {
+      const value = String(profileImage || '').trim();
+      user.profileImage = value || null;
+    }
+
+    if (coverImage !== undefined) {
+      const value = String(coverImage || '').trim();
+      user.coverImage = value || null;
+    }
+
+    if (profileTheme !== undefined) {
+      const allowedThemes = new Set(['sunset', 'ocean', 'forest', 'aurora']);
+      const selectedTheme = String(profileTheme || '').trim().toLowerCase();
+      if (allowedThemes.has(selectedTheme)) {
+        user.profileTheme = selectedTheme;
+      }
+    }
+
+    if (age !== undefined) {
+      const parsed = Number(age);
+      user.age = Number.isFinite(parsed) ? Math.max(18, Math.min(120, parsed)) : null;
+    }
+
+    if (location !== undefined) {
+      user.location = String(location).trim().slice(0, 80);
+    }
+
+    if (instagramHandle !== undefined) {
+      user.instagramHandle = String(instagramHandle).replace('@', '').trim().slice(0, 40);
+    }
+
+    const normalizedTravelStyles = normalizeStringArray(travelStyles);
+    if (normalizedTravelStyles !== undefined) {
+      user.travelStyles = normalizedTravelStyles;
+    }
+
+    const normalizedInterests = normalizeStringArray(interests);
+    if (normalizedInterests !== undefined) {
+      user.interests = normalizedInterests;
+    }
+
+    const normalizedLanguages = normalizeStringArray(languages);
+    if (normalizedLanguages !== undefined) {
+      user.languages = normalizedLanguages;
+    }
+
+    const normalizedCountries = normalizeStringArray(countriesVisited, 30);
+    if (normalizedCountries !== undefined) {
+      user.countriesVisited = normalizedCountries;
+    }
+
+    const normalizedTrips = normalizeStringArray(upcomingTrips, 10);
+    if (normalizedTrips !== undefined) {
+      user.upcomingTrips = normalizedTrips;
+    }
+
+    const normalizedPhotos = normalizeStringArray(photos, 6);
+    if (normalizedPhotos !== undefined) {
+      user.photos = normalizedPhotos;
+    }
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: user.toJSON(),
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Profile update failed',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * ADMIN - List users
+ * GET /api/auth/admin/users
+ */
+exports.listUsers = async (req, res) => {
+  try {
+    const users = await User.find().sort({ createdAt: -1 });
+    return res.json({
+      success: true,
+      users: users.map((user) => user.toJSON()),
+    });
+  } catch (error) {
+    console.error('List users error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch users',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * ADMIN - Block/unblock user
+ * PATCH /api/auth/admin/users/:userId/block
+ */
+exports.setUserBlockStatus = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { isBlocked } = req.body;
+
+    if (typeof isBlocked !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'isBlocked boolean is required',
+      });
+    }
+
+    if (String(userId) === String(req.userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Admin cannot block own account',
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    if (user.role === 'admin') {
+      return res.status(400).json({
+        success: false,
+        message: 'Admin account cannot be blocked',
+      });
+    }
+
+    user.isBlocked = isBlocked;
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: isBlocked ? 'User blocked' : 'User unblocked',
+      user: user.toJSON(),
+    });
+  } catch (error) {
+    console.error('Set user block status error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update block status',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * FOLLOW USER - Add user to current user's following list
+ * POST /api/auth/follow/:userId
+ * Protected route - requires valid token
+ */
+exports.followUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const currentUserId = req.userId;
+
+    if (String(userId) === String(currentUserId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot follow yourself',
+      });
+    }
+
+    const userToFollow = await User.findById(userId);
+    if (!userToFollow) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const currentUser = await User.findById(currentUserId);
+    if (!currentUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'Current user not found',
+      });
+    }
+
+    // Check if already following
+    if (currentUser.following.includes(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Already following this user',
+      });
+    }
+
+    // Add to following list
+    currentUser.following.push(userId);
+    await currentUser.save();
+
+    // Add to followers list
+    userToFollow.followers.push(currentUserId);
+    await userToFollow.save();
+
+    // Create follow notification
+    await createFollowNotification(currentUserId, userId);
+
+    return res.json({
+      success: true,
+      message: 'User followed successfully',
+      user: currentUser.toJSON(),
+    });
+  } catch (error) {
+    console.error('Follow user error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to follow user',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * UNFOLLOW USER - Remove user from current user's following list
+ * POST /api/auth/unfollow/:userId
+ * Protected route - requires valid token
+ */
+exports.unfollowUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const currentUserId = req.userId;
+
+    if (String(userId) === String(currentUserId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot unfollow yourself',
+      });
+    }
+
+    const userToUnfollow = await User.findById(userId);
+    if (!userToUnfollow) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const currentUser = await User.findById(currentUserId);
+    if (!currentUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'Current user not found',
+      });
+    }
+
+    // Check if following
+    if (!currentUser.following.includes(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Not following this user',
+      });
+    }
+
+    // Remove from following list
+    currentUser.following = currentUser.following.filter((id) => String(id) !== String(userId));
+    await currentUser.save();
+
+    // Remove from followers list
+    userToUnfollow.followers = userToUnfollow.followers.filter((id) => String(id) !== String(currentUserId));
+    await userToUnfollow.save();
+
+    return res.json({
+      success: true,
+      message: 'User unfollowed successfully',
+      user: currentUser.toJSON(),
+    });
+  } catch (error) {
+    console.error('Unfollow user error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to unfollow user',
       error: error.message,
     });
   }

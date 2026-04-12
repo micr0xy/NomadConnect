@@ -10,6 +10,8 @@ const useAuthStore = create(
       isLoading: false,
       error: null,
       isAuthenticated: false,
+      isHydrated: false,
+      hasCheckedAuth: false,
 
       // Sign up with email
       signup: async (firstName, lastName, email, password, confirmPassword) => {
@@ -27,6 +29,7 @@ const useAuthStore = create(
             user: response.data.user,
             token: response.data.token,
             isAuthenticated: true,
+            hasCheckedAuth: true,
             isLoading: false,
           });
 
@@ -51,12 +54,38 @@ const useAuthStore = create(
             user: response.data.user,
             token: response.data.token,
             isAuthenticated: true,
+            hasCheckedAuth: true,
             isLoading: false,
           });
 
           return response.data;
         } catch (error) {
           const errorMessage = error.response?.data?.message || 'Login failed';
+          set({ error: errorMessage, isLoading: false });
+          throw error;
+        }
+      },
+
+      // Admin login with elevated credentials
+      adminLogin: async (email, password) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await api.post('/api/auth/admin/login', {
+            email,
+            password,
+          });
+
+          set({
+            user: response.data.user,
+            token: response.data.token,
+            isAuthenticated: true,
+            hasCheckedAuth: true,
+            isLoading: false,
+          });
+
+          return response.data;
+        } catch (error) {
+          const errorMessage = error.response?.data?.message || 'Admin login failed';
           set({ error: errorMessage, isLoading: false });
           throw error;
         }
@@ -91,25 +120,64 @@ const useAuthStore = create(
 
       // Check authentication status
       checkAuth: async () => {
-        set({ isLoading: true });
+        const authAlreadyResolved = get().hasCheckedAuth;
+        if (authAlreadyResolved && get().isAuthenticated) {
+          return { success: true, user: get().user };
+        }
+
+        set({ isLoading: false });
         try {
           const response = await api.get('/api/auth/checkauth');
 
           set({
             user: response.data.user,
             isAuthenticated: true,
+            hasCheckedAuth: true,
             isLoading: false,
             error: null,
           });
 
           return response.data;
         } catch (error) {
+          // If login/signup completed while this request was in flight, don't override it.
+          if (get().isAuthenticated) {
+            set({ hasCheckedAuth: true, isLoading: false });
+            return null;
+          }
+
+          const status = error.response?.status;
+          if (status === 401 || status === 403) {
+            set({
+              user: null,
+              token: null,
+              isAuthenticated: false,
+              hasCheckedAuth: true,
+              isLoading: false,
+              error: null,
+            });
+          } else {
+            set({ hasCheckedAuth: true, isLoading: false });
+          }
+          return null;
+        }
+      },
+
+      // Update profile in backend and local store
+      updateProfile: async (profileData) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await api.put('/api/auth/profile', profileData);
           set({
-            user: null,
-            isAuthenticated: false,
+            user: response.data.user,
+            isAuthenticated: true,
+            hasCheckedAuth: true,
             isLoading: false,
           });
-          return null;
+          return response.data;
+        } catch (error) {
+          const errorMessage = error.response?.data?.message || 'Profile update failed';
+          set({ error: errorMessage, isLoading: false });
+          throw error;
         }
       },
 
@@ -123,6 +191,7 @@ const useAuthStore = create(
             user: null,
             token: null,
             isAuthenticated: false,
+            hasCheckedAuth: true,
             isLoading: false,
           });
         } catch (error) {
@@ -137,14 +206,30 @@ const useAuthStore = create(
 
       // Set user
       setUser: (user) => set({ user }),
+
+      // Persist hydration marker
+      setHydrated: (isHydrated) => set({ isHydrated }),
     }),
     {
       name: 'auth-store',
       partialize: (state) => ({
-        user: state.user,
+        user: state.user
+          ? {
+              _id: state.user._id,
+              email: state.user.email,
+              firstName: state.user.firstName,
+              lastName: state.user.lastName,
+              role: state.user.role,
+              isBlocked: state.user.isBlocked,
+              profileTheme: state.user.profileTheme,
+            }
+          : null,
         token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHydrated(true);
+      },
     }
   )
 );

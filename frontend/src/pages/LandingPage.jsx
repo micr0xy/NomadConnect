@@ -1,434 +1,413 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
-import { FaMapMarkerAlt, FaUsers, FaUserCircle, FaUserPlus, FaMap, FaHandshake, FaArrowRight } from 'react-icons/fa'
+import { motion, useScroll, useTransform } from 'framer-motion'
+import { FaArrowRight, FaLeaf, FaUsers, FaMapMarkedAlt, FaCompass } from 'react-icons/fa'
+import Map from '../components/Map'
 import Logo from '../components/Logo'
 
-// Animated Feature Section Component
-function FeatureSection() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: "-100px" })
+const demoEvents = [
+  {
+    _id: 'landing-event-1',
+    title: 'Sunrise Ridge Hike',
+    description: 'Chase the golden hour from the ridge with fellow trail wanderers.',
+    category: 'adventure',
+    startTime: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
+    participants: [{ userEmail: 'a@example.com' }, { userEmail: 'b@example.com' }, { userEmail: 'd@example.com' }],
+    location: { coordinates: [85.324, 27.7172] },
+  },
+  {
+    _id: 'landing-event-2',
+    title: 'Forest Nomads Meetup',
+    description: 'Coffee, maps, and stories from the road.',
+    category: 'meetup',
+    startTime: new Date(Date.now() + 1000 * 60 * 60 * 36).toISOString(),
+    participants: [{ userEmail: 'c@example.com' }],
+    location: { coordinates: [85.312, 27.705] },
+  },
+  {
+    _id: 'landing-event-3',
+    title: 'Riverside Camp Night',
+    description: 'Campfire, stars, and river sounds.',
+    category: 'travel',
+    startTime: new Date(Date.now() + 1000 * 60 * 60 * 48).toISOString(),
+    participants: [{ userEmail: 'e@example.com' }, { userEmail: 'f@example.com' }],
+    location: { coordinates: [85.336, 27.725] },
+  },
+]
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2
-      }
-    }
-  }
+const MARQUEE_TEXT = [
+  'TRAILS', 'SUMMITS', 'RIVERS', 'NOMADS', 'WILDERNESS', 'ADVENTURES',
+  'FORESTS', 'CONNECT', 'EXPLORE', 'NATURE', 'PATHS', 'WANDERERS',
+]
 
-  const cardVariants = {
-    hidden: { y: 50, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.6, ease: "easeOut" }
-    }
-  }
+const features = [
+  {
+    icon: FaMapMarkedAlt,
+    title: 'Discover Nature Events',
+    desc: 'Find hikes, camps, river runs, and sunrise chases happening right now — plotted live on the map.',
+    accent: '#3aad52',
+    bg: '#0f2d14',
+  },
+  {
+    icon: FaUsers,
+    title: 'Meet Fellow Nomads',
+    desc: 'Every trail is better shared. Connect with travelers who move through the world the same way you do.',
+    accent: '#7ab860',
+    bg: '#1a4522',
+  },
+  {
+    icon: FaCompass,
+    title: 'Drop a Pin, Start an Adventure',
+    desc: 'See a great spot? Tap the map, name your adventure, and watch your crew arrive.',
+    accent: '#d4943a',
+    bg: '#2d1a08',
+  },
+]
 
-  return (
-    <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-white/50">
-      <div className="max-w-7xl mx-auto">
-        {/* Section Header */}
-        <motion.div
-          initial={{ y: 30, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
-            Everything You Need to Connect
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Simple tools to bring nomads together across Nepal's most beautiful destinations.
-          </p>
-        </motion.div>
+const stats = [
+  { value: '1,200+', label: 'Nature Nomads' },
+  { value: '340+',   label: 'Events Created' },
+  { value: '89',     label: 'Countries' },
+  { value: '∞',      label: 'Memories' },
+]
 
-        {/* Feature Cards */}
-        <motion.div
-          ref={ref}
-          variants={containerVariants}
-          initial="hidden"
-          animate={isInView ? "visible" : "hidden"}
-          className="grid md:grid-cols-3 gap-8"
-        >
-          {/* Card 1 */}
-          <motion.div variants={cardVariants} className="bg-white rounded-2xl p-8 shadow-md hover:shadow-xl transition-shadow border border-gray-100">
-            <div className="w-14 h-14 bg-nomad-orange-100 rounded-xl flex items-center justify-center mb-6">
-              <FaMapMarkerAlt className="w-7 h-7 text-nomad-orange-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Create Events on the Map</h3>
-            <p className="text-gray-600 leading-relaxed">
-              Pin a location in Nepal and invite others to join your adventure — from Pokhara lakeside hikes to Kathmandu rooftop gatherings.
-            </p>
-          </motion.div>
-
-          {/* Card 2 */}
-          <motion.div variants={cardVariants} className="bg-white rounded-2xl p-8 shadow-md hover:shadow-xl transition-shadow border border-gray-100">
-            <div className="w-14 h-14 bg-nomad-orange-100 rounded-xl flex items-center justify-center mb-6">
-              <FaUsers className="w-7 h-7 text-nomad-orange-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Find Your Crew</h3>
-            <p className="text-gray-600 leading-relaxed">
-              Browse upcoming events near you and connect with like-minded travelers who share your passion for exploration.
-            </p>
-          </motion.div>
-
-          {/* Card 3 */}
-          <motion.div variants={cardVariants} className="bg-white rounded-2xl p-8 shadow-md hover:shadow-xl transition-shadow border border-gray-100">
-            <div className="w-14 h-14 bg-nomad-orange-100 rounded-xl flex items-center justify-center mb-6">
-              <FaUserCircle className="w-7 h-7 text-nomad-orange-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Build Your Profile</h3>
-            <p className="text-gray-600 leading-relaxed">
-              Showcase your travel story, interests, and past adventures. Let others know who they're exploring with.
-            </p>
-          </motion.div>
-        </motion.div>
-      </div>
-    </section>
-  )
-}
-
-// Animated How It Works Section Component
-function HowItWorksSection() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: "-100px" })
-
-  const stepVariants = {
-    hidden: { scale: 0.8, opacity: 0 },
-    visible: (i) => ({
-      scale: 1,
-      opacity: 1,
-      transition: {
-        delay: i * 0.2,
-        duration: 0.5,
-        ease: "easeOut"
-      }
-    })
-  }
-
-  return (
-    <section id="how-it-works" className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-stone-50 to-nomad-orange-50/30">
-      <div className="max-w-7xl mx-auto">
-        {/* Section Header */}
-        <motion.div
-          initial={{ y: 30, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
-            How It Works
-          </h2>
-          <p className="text-lg text-nomad-orange-600 max-w-2xl mx-auto">
-            Three simple steps to go from solo traveler to part of a community.
-          </p>
-        </motion.div>
-
-        {/* Steps */}
-        <div ref={ref} className="grid md:grid-cols-3 gap-12">
-          {/* Step 1 */}
-          <motion.div
-            custom={0}
-            variants={stepVariants}
-            initial="hidden"
-            animate={isInView ? "visible" : "hidden"}
-            className="text-center"
-          >
-            <div className="w-20 h-20 bg-nomad-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <FaUserPlus className="w-10 h-10 text-nomad-orange-600" />
-            </div>
-            <div className="text-nomad-orange-600 font-bold text-sm mb-3">Step 01</div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Create Your Profile</h3>
-            <p className="text-gray-600 leading-relaxed">
-              Sign up and set up your nomad profile — share where you've been and where you're headed.
-            </p>
-          </motion.div>
-
-          {/* Step 2 */}
-          <motion.div
-            custom={1}
-            variants={stepVariants}
-            initial="hidden"
-            animate={isInView ? "visible" : "hidden"}
-            className="text-center"
-          >
-            <div className="w-20 h-20 bg-nomad-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <FaMap className="w-10 h-10 text-nomad-orange-600" />
-            </div>
-            <div className="text-nomad-orange-600 font-bold text-sm mb-3">Step 02</div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Create or Browse Events</h3>
-            <p className="text-gray-600 leading-relaxed">
-              Pin an event on the map or explore what other travelers have planned nearby.
-            </p>
-          </motion.div>
-
-          {/* Step 3 */}
-          <motion.div
-            custom={2}
-            variants={stepVariants}
-            initial="hidden"
-            animate={isInView ? "visible" : "hidden"}
-            className="text-center"
-          >
-            <div className="w-20 h-20 bg-nomad-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <FaHandshake className="w-10 h-10 text-nomad-orange-600" />
-            </div>
-            <div className="text-nomad-orange-600 font-bold text-sm mb-3">Step 03</div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Connect & Explore</h3>
-            <p className="text-gray-600 leading-relaxed">
-              Join events, meet your crew, and explore Nepal together — no more solo wandering.
-            </p>
-          </motion.div>
-        </div>
-      </div>
-    </section>
-  )
+// Fade-up animation variant
+const fadeUp = {
+  hidden:  { opacity: 0, y: 40 },
+  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.12, duration: 0.7, ease: [0.22, 1, 0.36, 1] } }),
 }
 
 export default function LandingPage() {
-  const [email, setEmail] = useState('')
+  const heroRef = useRef(null)
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
+  const heroImgY     = useTransform(scrollYProgress, [0, 1], ['0%', '25%'])
+  const heroOpacity  = useTransform(scrollYProgress, [0, 0.7], [1, 0])
+  const heroScale    = useTransform(scrollYProgress, [0, 1], [1, 1.08])
 
-  const handleWaitlistSubmit = (e) => {
-    e.preventDefault()
-    // Handle waitlist submission
-    console.log('Waitlist email:', email)
-    alert('Thanks for joining the waitlist!')
-    setEmail('')
-  }
+  const mapMarkers = demoEvents.map((e) => ({
+    id: e._id,
+    position: [e.location.coordinates[1], e.location.coordinates[0]],
+    title: e.title,
+    description: e.description,
+    popup: true,
+    event: e,
+  }))
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-50 to-stone-100">
-      {/* Hero Section */}
-      <section className="relative pt-20 pb-32 px-4 sm:px-6 lg:px-8 overflow-hidden">{/* Background decoration */}
-        <motion.div 
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 1, delay: 0.2 }}
-          className="absolute top-0 right-0 w-96 h-96 bg-nomad-orange-100/30 rounded-full filter blur-3xl -z-10"
-        ></motion.div>
-        <motion.div 
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 1, delay: 0.4 }}
-          className="absolute bottom-0 left-0 w-96 h-96 bg-nomad-orange-200/20 rounded-full filter blur-3xl -z-10"
-        ></motion.div>
+    <div className="bg-[#fdf8ee] overflow-x-hidden font-sans">
 
-        <div className="max-w-7xl mx-auto text-center">
-          {/* Subtitle with icon */}
-          <motion.div 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex items-center justify-center space-x-2 text-nomad-orange-600 mb-6"
-          >
-            <FaMapMarkerAlt className="w-5 h-5" />
-            <span className="text-sm font-medium">Discover events across Nepal</span>
+      {/* ═══ FIXED NAV ═══════════════════════════════════════════════════════ */}
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 sm:px-10 py-5">
+        <a href="/" className="flex items-center gap-2.5 text-white drop-shadow-md">
+          <Logo className="w-9 h-9 text-white" />
+          <span className="font-display text-xl font-semibold tracking-tight">NOMAD CONNECT</span>
+        </a>
+        <div className="flex items-center gap-3">
+          <a href="/login"  className="hidden sm:block text-white/90 hover:text-white text-sm font-medium transition-colors px-3 py-1.5">
+            Log in
+          </a>
+          <a href="/signup" className="bg-forest-500 hover:bg-forest-600 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors shadow-lg shadow-forest-950/30">
+            Join Free →
+          </a>
+        </div>
+      </nav>
+
+      {/* ═══ HERO ════════════════════════════════════════════════════════════ */}
+      <section ref={heroRef} className="relative h-screen overflow-hidden grain-overlay">
+        {/* Parallax background */}
+        <motion.div className="absolute inset-0 will-change-transform" style={{ y: heroImgY, scale: heroScale }}>
+          <img
+            src="https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=1920&q=85"
+            alt="mountain vista"
+            className="w-full h-full object-cover"
+          />
+          {/* Layered gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-forest-950/55 via-forest-950/20 to-forest-950/80" />
+        </motion.div>
+
+        {/* Hero content */}
+        <motion.div
+          className="relative z-10 flex flex-col items-center justify-center h-full text-center px-6"
+          style={{ opacity: heroOpacity }}
+        >
+          {/* Badge */}
+          <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}>
+            <span className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white/90 text-xs font-semibold px-4 py-1.5 rounded-full border border-white/20 mb-8 tracking-wider">
+              <FaLeaf className="text-forest-400" /> NATURE · NOMADS · COMMUNITY
+            </span>
           </motion.div>
 
-          {/* Main Heading with parallax effect */}
-          <motion.h1 
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 mb-6"
+          {/* Main headline */}
+          <motion.h1
+            className="font-display font-bold text-white leading-[0.88] tracking-tight"
+            style={{ fontSize: 'clamp(3.2rem, 10vw, 9.5rem)' }}
+            variants={fadeUp} initial="hidden" animate="visible" custom={1}
           >
-            Explore Nepal <span className="text-nomad-orange-600">Together</span>
+            Where Wild<br />
+            <em className="not-italic text-forest-400">Paths</em> Cross
           </motion.h1>
 
-          {/* Description */}
-          <motion.p 
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto mb-12 leading-relaxed"
+          {/* Sub */}
+          <motion.p
+            className="mt-6 text-white/75 font-light max-w-lg leading-relaxed"
+            style={{ fontSize: 'clamp(1rem, 2vw, 1.2rem)' }}
+            variants={fadeUp} initial="hidden" animate="visible" custom={2}
           >
-            Create events on a map, meet fellow nomads, and turn solo adventures<br className="hidden sm:block" />
-            into shared memories across the Himalayas.
+            Find nature events, meet fellow wanderers, and create adventures<br className="hidden sm:block" /> that belong to the wild.
           </motion.p>
 
-          {/* CTA Buttons */}
-          <motion.div 
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+          {/* CTAs */}
+          <motion.div
+            className="mt-10 flex flex-wrap justify-center gap-4"
+            variants={fadeUp} initial="hidden" animate="visible" custom={3}
           >
-            <Link
-              to="/signup"
-              className="px-8 py-4 bg-nomad-orange-600 text-white rounded-full font-semibold text-lg hover:bg-nomad-orange-700 transition-all shadow-lg hover:shadow-xl flex items-center space-x-2 group"
-            >
-              <FaMapMarkerAlt className="w-5 h-5" />
-              <span>Create an Event</span>
-            </Link>
-            <Link
-              to="/login"
-              className="px-8 py-4 bg-white text-gray-900 rounded-full font-semibold text-lg hover:bg-gray-50 transition-all shadow-md border border-gray-200 flex items-center space-x-2"
-            >
-              <FaUsers className="w-5 h-5" />
-              <span>Browse Events</span>
-            </Link>
+            <a href="/signup" className="px-8 py-3.5 bg-forest-500 hover:bg-forest-600 text-white rounded-full font-semibold transition-all duration-200 shadow-xl shadow-forest-950/40 hover:scale-105 active:scale-100">
+              Start Exploring
+            </a>
+            <a href="/login" className="px-8 py-3.5 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white rounded-full font-semibold border border-white/25 transition-all duration-200 flex items-center gap-2">
+              Log In <FaArrowRight size={12} />
+            </a>
+          </motion.div>
+        </motion.div>
+
+        {/* Scroll indicator */}
+        <motion.div
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1.5"
+          animate={{ y: [0, 8, 0] }}
+          transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
+        >
+          <div className="w-5 h-9 rounded-full border-2 border-white/30 flex items-start justify-center pt-1.5">
+            <div className="w-1 h-2 bg-white/70 rounded-full" />
+          </div>
+          <span className="text-white/40 text-[10px] tracking-widest font-medium">SCROLL</span>
+        </motion.div>
+
+        {/* Bottom wave divider */}
+        <div className="absolute bottom-0 left-0 right-0 z-10">
+          <svg viewBox="0 0 1440 80" className="w-full" preserveAspectRatio="none">
+            <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" fill="#1a4522" />
+          </svg>
+        </div>
+      </section>
+
+      {/* ═══ MARQUEE ═════════════════════════════════════════════════════════ */}
+      <div className="bg-forest-800 py-4 overflow-hidden relative z-10">
+        <div className="marquee-track whitespace-nowrap">
+          {[...MARQUEE_TEXT, ...MARQUEE_TEXT].map((word, i) => (
+            <span key={i} className="inline-flex items-center gap-4 mx-6 text-forest-300 text-xs font-bold tracking-[0.35em] uppercase">
+              {word}
+              <span className="text-forest-500 text-lg">·</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* ═══ MANIFESTO ═══════════════════════════════════════════════════════ */}
+      <section className="bg-forest-800 py-24 px-6 sm:px-12 relative overflow-hidden">
+        {/* bg leaf decoration */}
+        <div className="absolute -right-24 top-1/2 -translate-y-1/2 text-forest-700 opacity-20 pointer-events-none" style={{ fontSize: '28rem', lineHeight: 1 }}>
+          🌿
+        </div>
+        <div className="max-w-5xl mx-auto relative z-10">
+          <motion.p
+            className="text-forest-400 text-xs font-bold tracking-[0.3em] uppercase mb-8"
+            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+          >
+            Our Belief
+          </motion.p>
+          <motion.h2
+            className="font-display text-white leading-tight"
+            style={{ fontSize: 'clamp(2.2rem, 6vw, 5.5rem)' }}
+            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1}
+          >
+            Nature is better <em className="not-italic text-forest-400">shared.</em><br />
+            We built the platform<br />for those who live by it.
+          </motion.h2>
+          <motion.div
+            className="mt-10 w-24 h-1 bg-forest-500 rounded"
+            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={2}
+          />
+          <motion.p
+            className="mt-8 text-forest-200/70 max-w-xl font-light text-lg leading-relaxed"
+            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={3}
+          >
+            NOMAD CONNECT is where trail runners, mountaineers, van-lifers, and forest dwellers come together — one pin at a time.
+          </motion.p>
+        </div>
+      </section>
+
+      {/* ═══ STATS ═══════════════════════════════════════════════════════════ */}
+      <section className="bg-forest-950 py-16 px-6">
+        <div className="max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
+          {stats.map((s, i) => (
+            <motion.div key={s.label} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i}>
+              <p className="font-display text-forest-400 font-bold leading-none" style={{ fontSize: 'clamp(2.5rem,5vw,4rem)' }}>
+                {s.value}
+              </p>
+              <p className="mt-2 text-forest-300/60 text-xs font-semibold tracking-widest uppercase">{s.label}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══ FEATURES ════════════════════════════════════════════════════════ */}
+      <section className="bg-[#fdf8ee] py-28 px-6">
+        <div className="max-w-6xl mx-auto">
+          <motion.p className="text-forest-600 text-xs font-bold tracking-[0.3em] uppercase mb-4 text-center"
+            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            What you can do
+          </motion.p>
+          <motion.h2
+            className="font-display text-center text-forest-950 leading-tight mb-16"
+            style={{ fontSize: 'clamp(2rem,5vw,4rem)' }}
+            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1}
+          >
+            Built for the <em className="not-italic text-forest-600">restless soul</em>
+          </motion.h2>
+
+          <div className="grid sm:grid-cols-3 gap-6">
+            {features.map((f, i) => (
+              <motion.div
+                key={f.title}
+                className="rounded-3xl p-8 flex flex-col gap-5 hover:scale-[1.02] transition-transform duration-300 cursor-default"
+                style={{ backgroundColor: f.bg }}
+                variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i}
+              >
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ backgroundColor: f.accent + '22' }}>
+                  <f.icon size={22} style={{ color: f.accent }} />
+                </div>
+                <h3 className="font-display text-white text-2xl font-semibold leading-tight">{f.title}</h3>
+                <p className="text-white/55 text-sm leading-relaxed font-light">{f.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ MAP PREVIEW ═════════════════════════════════════════════════════ */}
+      <section className="bg-forest-950 py-24 px-6 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{ backgroundImage: 'radial-gradient(circle at 30% 60%, #3aad52 0%, transparent 60%)' }} />
+        <div className="max-w-5xl mx-auto relative z-10">
+          <motion.p className="text-forest-400 text-xs font-bold tracking-[0.3em] uppercase mb-4 text-center"
+            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            Live Events
+          </motion.p>
+          <motion.h2
+            className="font-display text-white text-center mb-10 leading-tight"
+            style={{ fontSize: 'clamp(2rem,5vw,4rem)' }}
+            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1}
+          >
+            Adventures happening <em className="not-italic text-forest-400">right now</em>
+          </motion.h2>
+
+          <motion.div
+            className="rounded-3xl overflow-hidden border border-forest-800 shadow-2xl shadow-forest-950"
+            style={{ height: '420px' }}
+            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={2}
+          >
+            <Map
+              center={[27.7172, 85.324]}
+              zoom={12}
+              markers={mapMarkers}
+              height="100%"
+              showUserLocation={false}
+              onMarkerClick={() => { window.location.href = '/login' }}
+            />
+          </motion.div>
+
+          <motion.p className="text-center text-forest-300/50 text-sm mt-5 font-light"
+            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={3}>
+            Sign in to see events near you and drop your own pin.
+          </motion.p>
+        </div>
+      </section>
+
+      {/* ═══ HOW IT WORKS ════════════════════════════════════════════════════ */}
+      <section className="bg-[#fdf8ee] py-28 px-6">
+        <div className="max-w-4xl mx-auto">
+          <motion.p className="text-forest-600 text-xs font-bold tracking-[0.3em] uppercase mb-4 text-center"
+            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            Getting started
+          </motion.p>
+          <motion.h2
+            className="font-display text-forest-950 text-center mb-16 leading-tight"
+            style={{ fontSize: 'clamp(2rem,5vw,3.8rem)' }}
+            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1}
+          >
+            Three steps to your<br /><em className="not-italic text-forest-600">next adventure</em>
+          </motion.h2>
+
+          <div className="flex flex-col sm:flex-row gap-10 sm:gap-6">
+            {[
+              { step: '01', icon: '🌿', title: 'Create your profile', desc: 'Tell the community who you are and where you roam.' },
+              { step: '02', icon: '🗺️', title: 'Explore the map', desc: 'Browse live events on the map — filter by trail, camp, meetup, or culture.' },
+              { step: '03', icon: '⛺', title: 'Join or create', desc: 'Drop a pin anywhere in the world and invite others to join the journey.' },
+            ].map((item, i) => (
+              <motion.div key={item.step} className="flex-1 flex flex-col gap-4"
+                variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i}>
+                <span className="font-display text-forest-200 font-bold text-6xl leading-none select-none">{item.step}</span>
+                <div className="text-3xl">{item.icon}</div>
+                <h3 className="font-display text-forest-950 text-2xl font-semibold">{item.title}</h3>
+                <p className="text-forest-800/60 text-sm leading-relaxed font-light">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ CTA ═════════════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden grain-overlay" style={{ minHeight: '70vh' }}>
+        <div className="absolute inset-0">
+          <img
+            src="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&w=1920&q=85"
+            alt="forest trail"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-forest-950 via-forest-950/60 to-forest-950/30" />
+        </div>
+        <div className="relative z-10 flex flex-col items-center justify-center min-h-[70vh] text-center px-6 py-24">
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            <span className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white/80 text-xs font-bold px-4 py-1.5 rounded-full border border-white/20 mb-8 tracking-widest">
+              <FaLeaf className="text-forest-400" /> FREE TO JOIN
+            </span>
+          </motion.div>
+          <motion.h2
+            className="font-display text-white font-bold leading-[0.9] tracking-tight"
+            style={{ fontSize: 'clamp(3rem, 9vw, 8rem)' }}
+            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1}
+          >
+            Ready to<br /><em className="not-italic text-forest-400">roam?</em>
+          </motion.h2>
+          <motion.p
+            className="mt-6 text-white/65 text-lg font-light max-w-md"
+            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={2}
+          >
+            Join over 1,200 nature nomads already on the map.
+          </motion.p>
+          <motion.div
+            className="mt-10 flex flex-wrap justify-center gap-4"
+            variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={3}
+          >
+            <a href="/signup" className="px-10 py-4 bg-forest-500 hover:bg-forest-400 text-white rounded-full font-semibold text-lg transition-all duration-200 shadow-2xl hover:scale-105 active:scale-100">
+              Create Free Account
+            </a>
+            <a href="/login" className="px-10 py-4 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white rounded-full font-semibold text-lg border border-white/25 transition-all duration-200">
+              Log In
+            </a>
           </motion.div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <FeatureSection />
-
-      {/* How It Works Section */}
-      <HowItWorksSection />
-
-      {/* CTA Section */}
-      <section id="join" className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-gradient-to-r from-nomad-orange-600 to-nomad-orange-700 rounded-3xl p-12 sm:p-16 text-center shadow-2xl">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              Ready to Connect with Fellow Nomads?
-            </h2>
-            <p className="text-nomad-orange-100 text-lg mb-8">
-              Join the waitlist and be the first to explore Nepal with your new crew.
-            </p>
-
-            {/* Email Form */}
-            <form onSubmit={handleWaitlistSubmit} className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
-                className="flex-1 px-6 py-4 rounded-full text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-nomad-orange-300 bg-white/90"
-              />
-              <button
-                type="submit"
-                className="px-8 py-4 bg-gradient-to-r from-nomad-teal-500 to-nomad-teal-600 text-white rounded-full font-semibold hover:from-nomad-teal-600 hover:to-nomad-teal-700 transition-all shadow-lg flex items-center justify-center space-x-2 group"
-              >
-                <span>Join Waitlist</span>
-                <FaArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
-            </form>
-          </div>
+      {/* ═══ FOOTER ══════════════════════════════════════════════════════════ */}
+      <footer className="bg-forest-950 py-10 px-6 text-center border-t border-forest-800/50">
+        <div className="flex items-center justify-center gap-2 text-forest-400 mb-3">
+          <Logo className="w-6 h-6 text-forest-400" />
+          <span className="font-display text-sm tracking-tight font-semibold">NOMAD CONNECT</span>
         </div>
-      </section>
-
-      {/* Footer */}
-      <FullScreenFooter />
+        <p className="text-forest-600 text-xs">
+          © {new Date().getFullYear()} NOMAD CONNECT · Built for the wild at heart.
+        </p>
+      </footer>
     </div>
-  )
-}
-
-// Full-Screen Footer Component
-function FullScreenFooter() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: false, amount: 0.3 })
-
-  return (
-    <footer ref={ref} className="min-h-screen relative overflow-hidden flex  bg-nomad-orange-600 items-center justify-center">
-      {/* Animated gradient background */}
-      <motion.div
-        animate={{
-          background: isInView
-            ? 'linear-gradient(135deg, #ea580c 0%, #f97316 25%, #14b8a6 75%, #0d9488 100%)'
-            : 'linear-gradient(135deg, #ea580c 0%, #f97316 50%, #14b8a6 100%)'
-        }}
-        transition={{ duration: 2, ease: "easeInOut" }}
-        className="absolute inset-0 -z-10"
-      />
-
-      {/* Decorative blobs */}
-      <motion.div
-        animate={{
-          scale: isInView ? [1, 1.2, 1] : 1,
-          rotate: isInView ? [0, 180, 360] : 0,
-        }}
-        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        className="absolute top-20 right-20 w-96 h-96 bg-white/10 rounded-full filter blur-3xl"
-      />
-      <motion.div
-        animate={{
-          scale: isInView ? [1, 1.3, 1] : 1,
-          rotate: isInView ? [360, 180, 0] : 0,
-        }}
-        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-        className="absolute bottom-20 left-20 w-80 h-80 bg-white/10 rounded-full filter blur-3xl"
-      />
-
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-        >
-          {/* Logo */}
-          <div className="flex items-center justify-center space-x-3 mb-8">
-            <Logo className="w-16 h-16 text-white" />
-            <span className="text-3xl font-bold text-white">NOMAD CONNECT</span>
-          </div>
-
-          {/* Tagline */}
-          <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">
-            Your Journey, Our Community
-          </h2>
-          <p className="text-xl text-white/90 mb-12 max-w-2xl mx-auto">
-            Connecting nomads across Nepal, one adventure at a time. Join us in creating unforgettable experiences.
-          </p>
-
-          {/* Social Links */}
-          <div className="flex items-center justify-center space-x-6 mb-12">
-            <a
-              href="#"
-              className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-all hover:scale-110"
-              aria-label="Facebook"
-            >
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-              </svg>
-            </a>
-            <a
-              href="#"
-              className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-all hover:scale-110"
-              aria-label="Instagram"
-            >
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-              </svg>
-            </a>
-            <a
-              href="#"
-              className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-all hover:scale-110"
-              aria-label="Twitter"
-            >
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
-              </svg>
-            </a>
-          </div>
-
-          {/* Footer Links */}
-          <div className="flex flex-wrap items-center justify-center gap-8 mb-8 text-white/90">
-            <a href="#" className="hover:text-white transition-colors font-medium">About Us</a>
-            <a href="#" className="hover:text-white transition-colors font-medium">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors font-medium">Terms of Service</a>
-            <a href="#" className="hover:text-white transition-colors font-medium">Contact</a>
-            <a href="#" className="hover:text-white transition-colors font-medium">Blog</a>
-          </div>
-
-          {/* Divider */}
-          <div className="w-full h-px bg-white/20 mb-8"></div>
-
-          {/* Copyright */}
-          <p className="text-white/70 text-sm">
-            © 2026 Nomad Connect. Crafted with ❤️ for adventurers everywhere.
-          </p>
-        </motion.div>
-      </div>
-    </footer>
   )
 }

@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 const api = axios.create({
-  baseURL: 'http://localhost:5000',
+  baseURL: API_BASE_URL,
   withCredentials: true, // Important: send cookies with every request
   headers: {
     'Content-Type': 'application/json',
@@ -11,11 +13,19 @@ const api = axios.create({
 // Request interceptor - add token to headers if available
 api.interceptors.request.use(
   (config) => {
-    // You can add token to Authorization header if needed
-    // const token = localStorage.getItem('token');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    try {
+      const persisted = localStorage.getItem('auth-store');
+      if (persisted) {
+        const parsed = JSON.parse(persisted);
+        const token = parsed?.state?.token;
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      }
+    } catch (error) {
+      // Ignore localStorage parse issues and continue with cookie auth.
+    }
+
     return config;
   },
   (error) => {

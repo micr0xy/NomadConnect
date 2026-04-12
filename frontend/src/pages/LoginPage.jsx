@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
 import { motion } from 'framer-motion'
 import useAuthStore from '../store/authStore'
@@ -11,8 +10,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const navigate = useNavigate()
-  const { login, googleAuth, isAuthenticated, error: storeError, clearError } = useAuthStore()
+  const { login, googleAuth, user, isAuthenticated, error: storeError, clearError } = useAuthStore()
 
   // Display store errors
   useEffect(() => {
@@ -25,9 +23,9 @@ export default function LoginPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/events')
+      window.location.href = user?.role === 'admin' ? '/admin' : '/events'
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, user?.role])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -49,7 +47,7 @@ export default function LoginPage() {
 
     try {
       await login(email, password)
-      navigate('/events')
+      window.location.href = '/events'
     } catch (err) {
       // Error is already set by the effect watching storeError
       console.error('Login error:', err)
@@ -72,7 +70,7 @@ export default function LoginPage() {
         decoded.family_name,
         decoded.picture
       )
-      navigate('/events')
+      window.location.href = '/events'
     } catch (err) {
       // Error is already set by the effect watching storeError
       console.error('Google login error:', err)
@@ -86,122 +84,142 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-50 to-nomad-orange-50 flex items-center justify-center px-4">
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        <div className="bg-white rounded-lg shadow-xl p-8">
-          {/* Logo */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center mb-4">
-              <Logo className="w-12 h-12" />
+    <div className="min-h-screen flex" style={{ background: '#0a1a0d' }}>
+      {/* ── Left panel: nature photo ── */}
+      <div className="hidden lg:flex flex-col justify-between w-[45%] relative overflow-hidden p-12">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: 'url(https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=85)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, rgba(10,26,13,0.7) 0%, rgba(30,107,46,0.3) 100%)' }} />
+        <div className="relative z-10 flex items-center gap-3">
+          <Logo className="w-9 h-9 text-forest-400" />
+          <span className="font-display text-xl font-semibold text-white tracking-tight">NOMAD CONNECT</span>
+        </div>
+        <div className="relative z-10">
+          <p className="text-forest-400 text-xs font-bold tracking-[0.3em] uppercase mb-4">Nature · Community · Adventure</p>
+          <h2 className="font-display text-5xl font-bold text-white leading-[1.05] mb-5">
+            Where wild<br />paths cross.
+          </h2>
+          <p className="text-white/55 text-base leading-relaxed max-w-xs">
+            Join thousands of nature nomads finding events, trails, and people worth knowing.
+          </p>
+          <div className="mt-8 flex items-center gap-3">
+            <div className="flex -space-x-2">
+              {['🧗','🏕️','🌿'].map((e, i) => (
+                <div key={i} className="w-9 h-9 rounded-full bg-forest-800 border-2 border-forest-600 flex items-center justify-center text-sm">{e}</div>
+              ))}
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">NOMAD CONNECT</h1>
-            <p className="text-gray-600 mt-2">Welcome back</p>
+            <p className="text-white/50 text-sm">1,200+ nomads already exploring</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Right panel: form ── */}
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12" style={{ background: '#0f2d14' }}>
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="w-full max-w-md"
+        >
+          {/* Mobile logo */}
+          <div className="flex items-center gap-2.5 mb-10 lg:hidden">
+            <Logo className="w-8 h-8 text-forest-400" />
+            <span className="font-display text-lg font-semibold text-white">NOMAD CONNECT</span>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="mb-8">
+            <h1 className="font-display text-4xl font-bold text-white mb-2">Welcome back</h1>
+            <p className="text-forest-400/70 text-sm">Sign in to continue your journey</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                {error}
+              <div className="bg-red-900/25 border border-red-700/40 text-red-300 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+                <span>⚠</span> {error}
               </div>
             )}
 
-            {/* Email Input */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
+              <label className="block text-xs font-semibold text-forest-400/60 mb-2 tracking-wider uppercase">Email</label>
               <input
                 type="email"
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nomad-orange-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-3.5 rounded-xl text-white placeholder-forest-600 outline-none transition-all text-sm"
+                style={{ background: 'rgba(10,26,13,0.6)', border: '1px solid rgba(58,173,82,0.2)' }}
+                onFocus={(e) => e.target.style.borderColor = 'rgba(58,173,82,0.5)'}
+                onBlur={(e) => e.target.style.borderColor = 'rgba(58,173,82,0.2)'}
                 placeholder="you@example.com"
                 disabled={isLoading}
               />
             </div>
 
-            {/* Password Input */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-xs font-semibold text-forest-400/60 tracking-wider uppercase">Password</label>
+                <a href="#" className="text-xs text-forest-500 hover:text-forest-400 transition-colors">Forgot password?</a>
+              </div>
               <input
                 type="password"
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nomad-orange-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-3.5 rounded-xl text-white placeholder-forest-600 outline-none transition-all text-sm"
+                style={{ background: 'rgba(10,26,13,0.6)', border: '1px solid rgba(58,173,82,0.2)' }}
+                onFocus={(e) => e.target.style.borderColor = 'rgba(58,173,82,0.5)'}
+                onBlur={(e) => e.target.style.borderColor = 'rgba(58,173,82,0.2)'}
                 placeholder="••••••••"
                 disabled={isLoading}
               />
             </div>
 
-            {/* Remember Me & Forgot Password */}
-            <div className="flex justify-between items-center">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 text-nomad-orange-600 rounded border-gray-300"
-                  disabled={isLoading}
-                />
-                <span className="ml-2 text-sm text-gray-700">Remember me</span>
-              </label>
-              <a href="#" className="text-sm text-nomad-orange-600 hover:text-nomad-orange-700">
-                Forgot password?
-              </a>
-            </div>
-
-            {/* Login Button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-nomad-orange-600 text-white py-2 rounded-lg font-semibold hover:bg-nomad-orange-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3.5 rounded-xl font-semibold text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+              style={{ background: isLoading ? '#2d8a40' : 'linear-gradient(135deg, #2d8a40, #3aad52)' }}
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? 'Signing in…' : 'Sign In →'}
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="my-6 flex items-center">
-            <div className="flex-1 border-t border-gray-300"></div>
-            <span className="px-3 text-gray-500 text-sm">OR</span>
-            <div className="flex-1 border-t border-gray-300"></div>
+          <div className="my-7 flex items-center gap-3">
+            <div className="flex-1 h-px" style={{ background: 'rgba(58,173,82,0.15)' }} />
+            <span className="text-forest-600 text-xs tracking-widest">OR</span>
+            <div className="flex-1 h-px" style={{ background: 'rgba(58,173,82,0.15)' }} />
           </div>
 
-          {/* Google OAuth Button */}
-          <div className="mb-4">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              render={(renderProps) => (
-                <button
-                  onClick={renderProps.onClick}
-                  disabled={renderProps.disabled || isLoading}
-                  className="w-full flex items-center justify-center gap-2 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <span>🔵</span>
-                  <span className="text-gray-700 font-medium">Continue with Google</span>
-                </button>
-              )}
-            />
-          </div>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            render={(renderProps) => (
+              <button
+                onClick={renderProps.onClick}
+                disabled={renderProps.disabled || isLoading}
+                className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl text-forest-300 text-sm font-medium transition-all duration-200 disabled:opacity-50"
+                style={{ background: 'rgba(10,26,13,0.5)', border: '1px solid rgba(58,173,82,0.2)' }}
+              >
+                <span className="text-base">🌿</span>
+                Continue with Google
+              </button>
+            )}
+          />
 
-          {/* Sign Up Link */}
-          <p className="mt-8 text-center text-gray-600">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-nomad-orange-600 font-semibold hover:text-nomad-orange-700">
-              Sign up here
-            </Link>
+          <p className="mt-8 text-center text-forest-600 text-sm">
+            New to NOMAD CONNECT?{' '}
+            <a href="/signup" className="text-forest-400 font-semibold hover:text-forest-300 transition-colors">
+              Create account
+            </a>
           </p>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   )
 }

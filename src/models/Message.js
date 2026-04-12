@@ -16,6 +16,10 @@ const messageSchema = new mongoose.Schema(
       type: String,
       default: 'Anonymous',
     },
+    userProfileImage: {
+      type: String,
+      default: '',
+    },
     text: {
       type: String,
       required: [true, 'Message text is required'],

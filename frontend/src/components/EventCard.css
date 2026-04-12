@@ -1,0 +1,56 @@
+﻿/* ── EventCard — Warm palette ── */
+.event-card {
+  background: white;
+  border: 1px solid rgba(180,140,100,0.18);
+  border-radius: 14px; padding: 14px;
+  cursor: pointer; transition: all 0.2s ease;
+  overflow: hidden; position: relative;
+  box-shadow: 0 1px 4px rgba(100,70,40,0.04);
+}
+.event-card:hover {
+  border-color: rgba(58,125,68,0.35);
+  background: #fdfaf6;
+  box-shadow: 0 4px 12px rgba(100,70,40,0.1);
+  transform: translateY(-1px);
+}
+.event-card.selected {
+  border-color: #3a7d44; border-width: 2px;
+  background: #f5faf5; padding: 13px;
+  box-shadow: 0 4px 14px rgba(58,125,68,0.12);
+}
+.event-card-header {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; margin-bottom: 10px; gap: 10px;
+}
+.event-card-title-section { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+.event-card-title {
+  margin: 0; font-size: 0.9rem; font-weight: 600;
+  color: #2c2420; word-break: break-word; line-height: 1.4;
+}
+.event-capacity {
+  display: flex; align-items: center; gap: 4px;
+  color: #9c7a5a; font-size: 0.75rem; font-weight: 500;
+  white-space: nowrap; background: rgba(180,140,100,0.1);
+  padding: 3px 8px; border-radius: 6px;
+}
+.event-card-description {
+  margin: 0 0 10px 0; font-size: 0.82rem;
+  color: #7a5c3a; line-height: 1.45; word-break: break-word;
+}
+.event-card-meta {
+  display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;
+}
+.event-card-meta-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.78rem; color: #9c7a5a;
+}
+.event-card-meta-item svg { flex-shrink: 0; color: rgba(180,140,100,0.6); }
+.event-status {
+  display: inline-block; font-size: 0.68rem; font-weight: 600;
+  padding: 3px 8px; border-radius: 4px;
+  text-transform: uppercase; letter-spacing: 0.4px;
+}
+.event-status.upcoming { background: rgba(58,125,68,0.1); color: #3a7d44; }
+.event-status.ongoing  { background: rgba(200,160,80,0.12); color: #8a6020; }
+.event-status.completed{ background: rgba(180,140,100,0.1); color: #7a5c3a; }
+.event-status.cancelled{ background: rgba(200,60,40,0.08); color: #c03820; }
