@@ -6,6 +6,7 @@ import { jwtDecode } from 'jwt-decode'
 import Logo from '../components/Logo'
 
 export default function LoginPage() {
+  const isGoogleEnabled = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -196,21 +197,25 @@ export default function LoginPage() {
             <div className="flex-1 h-px" style={{ background: 'rgba(58,173,82,0.15)' }} />
           </div>
 
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={handleGoogleError}
-            render={(renderProps) => (
-              <button
-                onClick={renderProps.onClick}
-                disabled={renderProps.disabled || isLoading}
-                className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl text-forest-300 text-sm font-medium transition-all duration-200 disabled:opacity-50"
-                style={{ background: 'rgba(10,26,13,0.5)', border: '1px solid rgba(58,173,82,0.2)' }}
-              >
-                <span className="text-base">🌿</span>
-                Continue with Google
-              </button>
-            )}
-          />
+          {isGoogleEnabled ? (
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              render={(renderProps) => (
+                <button
+                  onClick={renderProps.onClick}
+                  disabled={renderProps.disabled || isLoading}
+                  className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl text-forest-300 text-sm font-medium transition-all duration-200 disabled:opacity-50"
+                  style={{ background: 'rgba(10,26,13,0.5)', border: '1px solid rgba(58,173,82,0.2)' }}
+                >
+                  <span className="text-base">🌿</span>
+                  Continue with Google
+                </button>
+              )}
+            />
+          ) : (
+            <p className="text-center text-forest-600 text-xs">Google login is temporarily unavailable</p>
+          )}
 
           <p className="mt-8 text-center text-forest-600 text-sm">
             New to NOMAD CONNECT?{' '}

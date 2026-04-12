@@ -212,8 +212,18 @@ function AppContent() {
 }
 
 function App() {
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+
+  if (!googleClientId) {
+    return (
+      <Router>
+        <AppContent />
+      </Router>
+    )
+  }
+
   return (
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+    <GoogleOAuthProvider clientId={googleClientId}>
       <Router>
         <AppContent />
       </Router>

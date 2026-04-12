@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const isDev = import.meta.env.DEV;
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = configuredApiBaseUrl || (isDev ? 'http://localhost:5000' : '');
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -13,6 +15,12 @@ const api = axios.create({
 // Request interceptor - add token to headers if available
 api.interceptors.request.use(
   (config) => {
+    if (!API_BASE_URL && !isDev) {
+      const configError = new Error('Missing VITE_API_BASE_URL in frontend production environment');
+      configError.code = 'MISSING_API_BASE_URL';
+      throw configError;
+    }
+
     try {
       const persisted = localStorage.getItem('auth-store');
       if (persisted) {
@@ -37,6 +45,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (!error.response && error.code === 'ERR_NETWORK') {
+      error.message = 'Network error: backend unreachable or blocked by CORS';
+    }
+
     if (error.response?.status === 401) {
       // Token expired or invalid - clear auth state
       // This will be handled by the useAuthStore

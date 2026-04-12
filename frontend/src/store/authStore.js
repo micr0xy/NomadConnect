@@ -2,6 +2,10 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import api from '../services/api';
 
+const extractErrorMessage = (error, fallback) => {
+  return error.response?.data?.message || error.message || fallback;
+};
+
 const useAuthStore = create(
   persist(
     (set, get) => ({
@@ -35,7 +39,7 @@ const useAuthStore = create(
 
           return response.data;
         } catch (error) {
-          const errorMessage = error.response?.data?.message || 'Signup failed';
+          const errorMessage = extractErrorMessage(error, 'Signup failed');
           set({ error: errorMessage, isLoading: false });
           throw error;
         }
@@ -60,7 +64,7 @@ const useAuthStore = create(
 
           return response.data;
         } catch (error) {
-          const errorMessage = error.response?.data?.message || 'Login failed';
+          const errorMessage = extractErrorMessage(error, 'Login failed');
           set({ error: errorMessage, isLoading: false });
           throw error;
         }
@@ -85,7 +89,7 @@ const useAuthStore = create(
 
           return response.data;
         } catch (error) {
-          const errorMessage = error.response?.data?.message || 'Admin login failed';
+          const errorMessage = extractErrorMessage(error, 'Admin login failed');
           set({ error: errorMessage, isLoading: false });
           throw error;
         }
@@ -112,7 +116,7 @@ const useAuthStore = create(
 
           return response.data;
         } catch (error) {
-          const errorMessage = error.response?.data?.message || 'Google auth failed';
+          const errorMessage = extractErrorMessage(error, 'Google auth failed');
           set({ error: errorMessage, isLoading: false });
           throw error;
         }
@@ -175,7 +179,7 @@ const useAuthStore = create(
           });
           return response.data;
         } catch (error) {
-          const errorMessage = error.response?.data?.message || 'Profile update failed';
+          const errorMessage = extractErrorMessage(error, 'Profile update failed');
           set({ error: errorMessage, isLoading: false });
           throw error;
         }
@@ -195,7 +199,7 @@ const useAuthStore = create(
             isLoading: false,
           });
         } catch (error) {
-          const errorMessage = error.response?.data?.message || 'Logout failed';
+          const errorMessage = extractErrorMessage(error, 'Logout failed');
           set({ error: errorMessage, isLoading: false });
           throw error;
         }
