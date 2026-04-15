@@ -88,3 +88,25 @@
 .admin-broadcast-form textarea {
   resize: vertical;
 }
+
+@media (max-width: 700px) {
+  .admin-page {
+    padding: 12px;
+  }
+
+  .admin-section {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 8px;
+    font-size: 0.84rem;
+  }
+
+  .admin-btn {
+    width: 100%;
+    min-height: 36px;
+  }
+}

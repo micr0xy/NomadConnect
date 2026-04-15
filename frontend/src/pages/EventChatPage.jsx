@@ -213,8 +213,8 @@ export default function EventChatPage() {
       transition={{ duration: 0.3 }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
-        <div className="flex items-center gap-4 flex-1 min-w-0">
+      <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 bg-white border-b border-gray-200 shadow-sm flex-shrink-0 gap-2 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
           <motion.button
             onClick={() => navigate('/events')}
             whileHover={{ scale: 1.1 }}
@@ -225,7 +225,7 @@ export default function EventChatPage() {
             <MdArrowBack size={24} className="text-gray-700" />
           </motion.button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-gray-900 truncate">{event.title}</h1>
+            <h1 className="text-base sm:text-xl font-bold text-gray-900 truncate">{event.title}</h1>
             <p className="text-sm text-gray-500 capitalize">{event.eventCategory}</p>
           </div>
         </div>
@@ -234,7 +234,7 @@ export default function EventChatPage() {
           onClick={() => setShowParticipants(!showParticipants)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-2 px-4 py-2 ml-4 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-300 rounded-lg text-orange-600 font-semibold hover:shadow-md transition-all duration-200 flex-shrink-0"
+          className="flex items-center gap-2 px-3 sm:px-4 py-2 ml-2 sm:ml-4 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-300 rounded-lg text-orange-600 font-semibold hover:shadow-md transition-all duration-200 flex-shrink-0 text-sm"
           title={`${event.participants?.length || 0} participants`}
         >
           <MdPeople size={20} />
@@ -245,7 +245,7 @@ export default function EventChatPage() {
             onClick={handleDeleteEvent}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-2 px-4 py-2 ml-3 bg-red-50 border border-red-300 rounded-lg text-red-600 font-semibold hover:shadow-md transition-all duration-200 flex-shrink-0"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 ml-2 sm:ml-3 bg-red-50 border border-red-300 rounded-lg text-red-600 font-semibold hover:shadow-md transition-all duration-200 flex-shrink-0 text-sm"
             title="Delete Event"
           >
             Delete Event
@@ -256,7 +256,7 @@ export default function EventChatPage() {
       {/* Error Banner */}
       {error && (
         <motion.div
-          className="flex items-center justify-between px-6 py-3 bg-red-50 border-b border-red-200"
+          className="flex items-center justify-between px-3 sm:px-6 py-3 bg-red-50 border-b border-red-200"
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -10, opacity: 0 }}
@@ -317,33 +317,40 @@ export default function EventChatPage() {
 
         {/* Participants Sidebar */}
         {showParticipants && (
-          <motion.div
-            className="w-72 bg-white border-l border-gray-200 flex flex-col overflow-hidden shadow-lg"
-            initial={{ x: 400, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 400, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
-              <h3 className="text-lg font-bold text-gray-900">Participants</h3>
-              <motion.button
-                onClick={() => setShowParticipants(false)}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <MdClose size={24} className="text-gray-600" />
-              </motion.button>
-            </div>
-            <div className="flex-1 overflow-y-auto px-4 py-3">
-              <ParticipantsList
-                participants={event.participants || []}
-                createdBy={event.createdByEmail}
-                currentUserEmail={userEmail}
-                onOpenProfile={handleOpenProfile}
-              />
-            </div>
-          </motion.div>
+          <>
+            <div
+              className="fixed inset-0 z-30 bg-black/40 sm:hidden"
+              onClick={() => setShowParticipants(false)}
+              aria-hidden="true"
+            />
+            <motion.div
+              className="fixed inset-y-0 right-0 z-40 w-[85vw] max-w-sm sm:relative sm:inset-auto sm:z-auto sm:w-72 bg-white border-l border-gray-200 flex flex-col overflow-hidden shadow-lg"
+              initial={{ x: 400, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 400, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-200 flex-shrink-0">
+                <h3 className="text-lg font-bold text-gray-900">Participants</h3>
+                <motion.button
+                  onClick={() => setShowParticipants(false)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <MdClose size={24} className="text-gray-600" />
+                </motion.button>
+              </div>
+              <div className="flex-1 overflow-y-auto px-4 py-3">
+                <ParticipantsList
+                  participants={event.participants || []}
+                  createdBy={event.createdByEmail}
+                  currentUserEmail={userEmail}
+                  onOpenProfile={handleOpenProfile}
+                />
+              </div>
+            </motion.div>
+          </>
         )}
       </div>
     </motion.div>

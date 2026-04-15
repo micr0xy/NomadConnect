@@ -66,6 +66,27 @@ export default function MessagesHubPage() {
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
+  const [mobileThreadOpen, setMobileThreadOpen] = useState(false)
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768
+      setIsMobile(mobile)
+      if (!mobile) {
+        setMobileThreadOpen(false)
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  useEffect(() => {
+    if (activeTab !== 'direct') {
+      setMobileThreadOpen(false)
+    }
+  }, [activeTab])
 
   useEffect(() => {
     const fetchHubData = async () => {
@@ -251,8 +272,9 @@ export default function MessagesHubPage() {
         {loading ? (
           <div className="messages-hub-loading">Loading conversations...</div>
         ) : activeTab === 'direct' ? (
-          <div className="messages-split-layout">
-            <div className="messages-split-left">
+          <div className={`messages-split-layout ${isMobile ? 'mobile' : ''}`}>
+            {(!isMobile || !mobileThreadOpen) && (
+              <div className="messages-split-left">
               <div className="messages-search-wrap">
                 <FaSearch size={12} />
                 <input
@@ -275,7 +297,12 @@ export default function MessagesHubPage() {
                     <button
                       key={row.id}
                       className={`messages-hub-card ${selectedDirectGroupId === row.groupId ? 'active' : ''}`}
-                      onClick={() => setSelectedDirectGroupId(row.groupId)}
+                      onClick={() => {
+                        setSelectedDirectGroupId(row.groupId)
+                        if (isMobile) {
+                          setMobileThreadOpen(true)
+                        }
+                      }}
                     >
                       <div className="messages-hub-avatar">
                         {row.avatar ? (
@@ -296,12 +323,24 @@ export default function MessagesHubPage() {
                   ))
                 )}
               </div>
-            </div>
+              </div>
+            )}
 
-            <div className="messages-split-right">
+            {(!isMobile || mobileThreadOpen) && (
+              <div className="messages-split-right">
               {selectedDirectRow ? (
                 <>
                   <div className="messages-thread-header">
+                    {isMobile && (
+                      <button
+                        type="button"
+                        className="messages-thread-back"
+                        onClick={() => setMobileThreadOpen(false)}
+                        aria-label="Back to conversations"
+                      >
+                        <FaArrowLeft size={12} />
+                      </button>
+                    )}
                     <div className="messages-hub-avatar thread-avatar">
                       {selectedDirectRow.avatar ? (
                         <img src={selectedDirectRow.avatar} alt={selectedDirectRow.name} />
@@ -356,7 +395,8 @@ export default function MessagesHubPage() {
               ) : (
                 <div className="messages-thread-empty full">Select a conversation to start chatting.</div>
               )}
-            </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="messages-hub-list">

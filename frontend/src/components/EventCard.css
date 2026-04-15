@@ -5,7 +5,7 @@
   border-radius: 14px; padding: 14px;
   cursor: pointer; transition: all 0.2s ease;
   overflow: hidden; position: relative;
-  box-shadow: 0 1px 4px rgba(100,70,40,0.04);
+  box-shadow: 0 2px 8px rgba(100,70,40,0.05);
 }
 .event-card:hover {
   border-color: rgba(58,125,68,0.35);
@@ -24,7 +24,7 @@
 }
 .event-card-title-section { display: flex; flex-direction: column; gap: 5px; flex: 1; }
 .event-card-title {
-  margin: 0; font-size: 0.9rem; font-weight: 600;
+  margin: 0; font-size: 0.92rem; font-weight: 700;
   color: #2c2420; word-break: break-word; line-height: 1.4;
 }
 .event-capacity {
@@ -34,7 +34,7 @@
   padding: 3px 8px; border-radius: 6px;
 }
 .event-card-description {
-  margin: 0 0 10px 0; font-size: 0.82rem;
+  margin: 0 0 10px 0; font-size: 0.8rem;
   color: #7a5c3a; line-height: 1.45; word-break: break-word;
 }
 .event-card-meta {
@@ -54,3 +54,31 @@
 .event-status.ongoing  { background: rgba(200,160,80,0.12); color: #8a6020; }
 .event-status.completed{ background: rgba(180,140,100,0.1); color: #7a5c3a; }
 .event-status.cancelled{ background: rgba(200,60,40,0.08); color: #c03820; }
+
+@media (max-width: 768px) {
+  .event-card {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .event-card.selected {
+    padding: 11px;
+  }
+
+  .event-card-title {
+    font-size: 0.86rem;
+    line-height: 1.35;
+  }
+
+  .event-card-description {
+    font-size: 0.76rem;
+  }
+
+  .event-card-meta-item {
+    font-size: 0.74rem;
+  }
+
+  .event-capacity {
+    font-size: 0.7rem;
+  }
+}

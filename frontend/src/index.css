@@ -31,6 +31,8 @@
     scroll-behavior: smooth;
     height: 100%;
     width: 100%;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
@@ -40,6 +42,7 @@
     width: 100%;
     font-family: 'DM Sans', Inter, system-ui, sans-serif;
     color: #111827;
+    overflow-x: hidden;
   }
 
   #root {
@@ -47,6 +50,7 @@
     flex-direction: column;
     height: 100%;
     width: 100%;
+    overflow-x: hidden;
   }
 
   /* Nature-themed scrollbar */
@@ -58,6 +62,14 @@
   a {
     transition: color 0.2s ease;
     color: inherit;
+  }
+}
+
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
   }
 }
 

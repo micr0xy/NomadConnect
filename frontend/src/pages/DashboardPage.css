@@ -336,3 +336,65 @@
   border: 1px solid rgba(58,130,70,0.22); border-radius: 20px;
   font-size: 10px; font-weight: 700;
 }
+
+@media (max-width: 900px) {
+  .dashboard-header {
+    padding: 20px 16px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .dash-header-left {
+    min-width: 0;
+  }
+
+  .dash-name {
+    font-size: 20px;
+  }
+
+  .dash-explore-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .stats-grid,
+  .quick-actions,
+  .recent-section {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .stats-grid,
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .dash-avatar {
+    width: 44px;
+    height: 44px;
+  }
+
+  .dash-name {
+    font-size: 18px;
+  }
+
+  .stat-card,
+  .action-card,
+  .activity-row {
+    padding: 12px;
+  }
+
+  .activity-row {
+    align-items: flex-start;
+  }
+
+  .activity-right {
+    margin-left: auto;
+    padding-top: 2px;
+  }
+}

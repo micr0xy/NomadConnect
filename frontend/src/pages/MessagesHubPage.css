@@ -277,6 +277,19 @@
   gap: 10px;
 }
 
+.messages-thread-back {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(142, 164, 205, 0.3);
+  background: rgba(15, 29, 49, 0.9);
+  color: #dbe8ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .thread-avatar {
   width: 36px;
   height: 36px;
@@ -412,7 +425,7 @@
 
 @media (max-width: 768px) {
   .messages-hub-header {
-    padding: 12px 14px;
+    padding: 12px 14px 12px 74px;
   }
 
   .messages-hub-container {
@@ -426,13 +439,56 @@
 
   .messages-split-layout {
     grid-template-columns: 1fr;
+    min-height: 0;
   }
 
   .messages-split-left {
-    max-height: 42vh;
+    max-height: none;
+    height: 100%;
   }
 
   .messages-split-right {
-    min-height: 44vh;
+    min-height: 0;
+    height: 100%;
+  }
+
+  .messages-thread-item {
+    max-width: 84%;
+  }
+
+  .messages-thread-input-row input,
+  .messages-search-wrap input {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 520px) {
+  .messages-hub-container {
+    padding: 8px;
+    gap: 10px;
+  }
+
+  .messages-split-layout {
+    gap: 10px;
+  }
+
+  .messages-split-left {
+    max-height: none;
+  }
+
+  .messages-split-right {
+    min-height: 0;
+  }
+
+  .messages-thread-list {
+    padding: 10px;
+  }
+
+  .messages-thread-input-row {
+    padding: 8px;
+  }
+
+  .messages-hub-card {
+    gap: 10px;
   }
 }

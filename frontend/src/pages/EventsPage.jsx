@@ -20,10 +20,25 @@ export default function EventsPage() {
   const [mapCenter, setMapCenter] = useState([27.7172, 85.324]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [mobileView, setMobileView] = useState('map');
 
   // Fetch events on page load
   useEffect(() => {
     fetchEvents();
+  }, []);
+
+  useEffect(() => {
+    const onResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setMobileView('map');
+      }
+    };
+
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
 
   useEffect(() => {
@@ -97,41 +112,68 @@ export default function EventsPage() {
   };
 
   return (
-    <div className="events-page">
+    <div className={`events-page ${isMobile && mobileView === 'map' ? 'mobile-map-mode' : ''}`}>
       {/* Header */}
       <div className="events-header">
         <div className="header-content">
           <span className="header-kicker">Discover</span>
           <h1>Explore Events</h1>
           <p>Find nearby meetups or drop a pin to create your own event in seconds.</p>
+
+          {isMobile && (
+            <div className="events-mobile-switcher" role="tablist" aria-label="Map and event list view">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mobileView === 'map'}
+                className={`events-mobile-tab ${mobileView === 'map' ? 'active' : ''}`}
+                onClick={() => setMobileView('map')}
+              >
+                Map
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mobileView === 'list'}
+                className={`events-mobile-tab ${mobileView === 'list' ? 'active' : ''}`}
+                onClick={() => setMobileView('list')}
+              >
+                Events ({events.length})
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Main container */}
       <div className="events-container">
-        <div className="map-section">
-          <Map
-            center={mapCenter}
-            zoom={13}
-            markers={mapMarkers}
-            height="100%"
-            showUserLocation={true}
-            onMapClick={handleMapClick}
-            onMarkerClick={handleMarkerClick}
-            selectedPosition={selectedPosition}
-            userAvatar={userAvatar}
-            userInitials={userInitials}
-          />
-        </div>
+        {(!isMobile || mobileView === 'map') && (
+          <div className="map-section">
+            <Map
+              center={mapCenter}
+              zoom={13}
+              markers={mapMarkers}
+              height="100%"
+              showUserLocation={true}
+              onMapClick={handleMapClick}
+              onMarkerClick={handleMarkerClick}
+              selectedPosition={selectedPosition}
+              userAvatar={userAvatar}
+              userInitials={userInitials}
+            />
+          </div>
+        )}
 
         {/* Side panel: Event list + details */}
-        <div className="side-panel">
-          <EventList
-            events={events}
-            onSelectEvent={handleSelectEvent}
-            loading={loadingEvents}
-          />
-        </div>
+        {(!isMobile || mobileView === 'list') && (
+          <div className="side-panel">
+            <EventList
+              events={events}
+              onSelectEvent={handleSelectEvent}
+              loading={loadingEvents}
+            />
+          </div>
+        )}
       </div>
 
       {/* Modal for creating events */}

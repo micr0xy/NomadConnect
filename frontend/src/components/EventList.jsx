@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { MdCalendarMonth } from 'react-icons/md';
 import EventCard from './EventCard';
 import EventFilters from './EventFilters';
 import LoadingState from './LoadingState';
@@ -29,7 +30,8 @@ const EventList = ({ events, onSelectEvent, loading }) => {
     return (
       <div className="event-list-container">
         <div className="event-list-header">
-          <h3>📅 Upcoming Events</h3>
+          <h3><MdCalendarMonth size={18} /> Upcoming Events</h3>
+          <p>Loading nearby plans...</p>
         </div>
         <div className="event-list-content">
           <LoadingState count={3} variant="card" />
@@ -43,7 +45,8 @@ const EventList = ({ events, onSelectEvent, loading }) => {
     return (
       <div className="event-list-container">
         <div className="event-list-header">
-          <h3>📅 Upcoming Events</h3>
+          <h3><MdCalendarMonth size={18} /> Upcoming Events</h3>
+          <p>No events yet in your selected area</p>
         </div>
         <div className="event-list-content">
           <EmptyState
@@ -59,7 +62,8 @@ const EventList = ({ events, onSelectEvent, loading }) => {
   return (
     <div className="event-list-container">
       <div className="event-list-header">
-        <h3>📅 Upcoming Events ({filteredEvents.length})</h3>
+        <h3><MdCalendarMonth size={18} /> Upcoming Events</h3>
+        <p>{filteredEvents.length} results</p>
       </div>
 
       {/* Filters */}

@@ -153,13 +153,21 @@
   }
 
   .protected-place-search {
-    width: min(220px, calc(100vw - 104px));
+    width: min(100%, calc(100vw - 128px));
+    flex: 1;
+    min-width: 0;
   }
 
   .protected-header-actions {
-    top: 14px;
-    right: 14px;
+    top: max(12px, env(safe-area-inset-top));
+    left: 60px;
+    right: 12px;
     gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .protected-place-search__field {
+    min-height: 40px;
   }
 }
 

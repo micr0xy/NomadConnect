@@ -20,6 +20,19 @@ export default function NotificationIcon() {
   const [followActionLoadingIds, setFollowActionLoadingIds] = useState({})
 
   useEffect(() => {
+    if (!isOpen) {
+      return undefined
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isOpen])
+
+  useEffect(() => {
     fetchNotifications()
     const interval = setInterval(fetchNotifications, 30000) // Poll every 30 seconds
     return () => clearInterval(interval)
@@ -148,11 +161,21 @@ export default function NotificationIcon() {
           <div className="notification-panel">
             <div className="notification-header">
               <h3>Notifications</h3>
-              {unreadCount > 0 && (
-                <button className="mark-all-read" onClick={handleMarkAllAsRead}>
-                  Mark all read
+              <div className="notification-header-actions">
+                {unreadCount > 0 && (
+                  <button className="mark-all-read" onClick={handleMarkAllAsRead}>
+                    Mark all read
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="notification-close-btn"
+                  onClick={() => setIsOpen(false)}
+                  aria-label="Close notifications"
+                >
+                  ×
                 </button>
-              )}
+              </div>
             </div>
 
             <div className="notification-list">

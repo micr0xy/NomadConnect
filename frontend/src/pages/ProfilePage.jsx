@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -135,6 +135,8 @@ export default function ProfilePage() {
   })
 
   const [form, setForm] = useState(() => makeFormFromUser(user) || DEFAULT_PROFILE_FORM)
+  const coverInputRef = useRef(null)
+  const avatarInputRef = useRef(null)
 
   useEffect(() => {
     const fetchViewedProfile = async () => {
@@ -301,6 +303,9 @@ export default function ProfilePage() {
       setForm((prev) => ({ ...prev, profileImage: dataUrl }))
     } catch (error) {
       setSaveError('Could not process avatar image. Please try a different file.')
+    } finally {
+      // Allow selecting the same file again if user retries.
+      e.target.value = ''
     }
   }
 
@@ -321,6 +326,9 @@ export default function ProfilePage() {
       setForm((prev) => ({ ...prev, coverImage: dataUrl }))
     } catch (error) {
       setSaveError('Could not process cover image. Please try a different file.')
+    } finally {
+      // Allow selecting the same file again if user retries.
+      e.target.value = ''
     }
   }
 
@@ -410,9 +418,15 @@ export default function ProfilePage() {
         >
           {canEdit && editing && (
             <>
-              <label className="cover-edit-btn" htmlFor="cover-upload-input">Change cover</label>
+              <button
+                type="button"
+                className="cover-edit-btn"
+                onClick={() => coverInputRef.current?.click()}
+              >
+                Change cover
+              </button>
               <input
-                id="cover-upload-input"
+                ref={coverInputRef}
                 type="file"
                 accept="image/*"
                 onChange={handleCoverFileChange}
@@ -431,13 +445,17 @@ export default function ProfilePage() {
                 </div>
               )}
               {canEdit && editing && (
-                <label className="avatar-edit-btn" htmlFor="avatar-upload-input">
+                <button
+                  type="button"
+                  className="avatar-edit-btn"
+                  onClick={() => avatarInputRef.current?.click()}
+                >
                   Change
-                </label>
+                </button>
               )}
               {canEdit && editing && (
                 <input
-                  id="avatar-upload-input"
+                  ref={avatarInputRef}
                   type="file"
                   accept="image/*"
                   onChange={handleAvatarFileChange}
