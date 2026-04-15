@@ -275,6 +275,14 @@
   color: #f4f8ff;
 }
 
+.ig-joined-year {
+  margin: 0;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(196, 211, 237, 0.58);
+}
+
 .hero-subtitle {
   margin: 0;
   color: #c4d3ed;

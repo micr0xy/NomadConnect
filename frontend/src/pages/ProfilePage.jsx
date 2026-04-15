@@ -333,9 +333,22 @@ export default function ProfilePage() {
   }
 
   const displayPhotos = (profileData?.photos || []).slice(0, 6)
-  const usernameLabel =
-    profileData?.instagramHandle ||
-    String(profileData?.email || `${profileData?.firstName || 'traveler'}`).split('@')[0]
+  const displayNameWithAge = `${profileData?.firstName || ''} ${profileData?.lastName || ''}`.trim()
+    ? `${`${profileData?.firstName || ''} ${profileData?.lastName || ''}`.trim()}${profileData?.age ? `, ${profileData.age}` : ''}`
+    : `Traveler${profileData?.age ? `, ${profileData.age}` : ''}`
+
+  const joinedYear = (() => {
+    if (!profileData?.createdAt) {
+      return ''
+    }
+
+    const parsed = new Date(profileData.createdAt)
+    if (Number.isNaN(parsed.getTime())) {
+      return ''
+    }
+
+    return String(parsed.getFullYear())
+  })()
 
   const renderChipGroup = (items, emptyText) => {
     if (!items || items.length === 0) {
@@ -467,7 +480,7 @@ export default function ProfilePage() {
 
             <div className="ig-profile-main">
               <div className="ig-handle-row">
-                <h2 className="hero-name">{usernameLabel}</h2>
+                <h2 className="hero-name">{displayNameWithAge}</h2>
                 {profileData?.isVerified && <MdVerifiedUser className="ig-verified-icon" />}
               </div>
               <div className="profile-stats ig-stats">
@@ -486,10 +499,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="ig-bio-block">
-                <p className="ig-display-name">
-                  {profileData?.firstName} {profileData?.lastName}
-                  {profileData?.age ? `, ${profileData.age}` : ''}
-                </p>
+                <p className="ig-joined-year">{joinedYear ? `Joined ${joinedYear}` : 'Joined recently'}</p>
                 <p className="hero-subtitle">{profileData?.location || 'Location not shared'}</p>
                 <p className="about-text ig-about-inline">{profileData?.bio || 'No bio shared yet.'}</p>
                 {profileData?.instagramHandle && (
