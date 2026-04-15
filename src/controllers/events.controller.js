@@ -2,7 +2,11 @@ const Event = require('../models/Event');
 const Message = require('../models/Message');
 const User = require('../models/User');
 const { createEventNotification } = require('./notification.controller');
-const { generateHumanDescription, improveEventDraft: improveEventDraftNLP } = require('../services/eventNlp.service');
+const {
+  generateHumanDescription,
+  improveEventDraft: improveEventDraftNLP,
+  recommendEventsForUser,
+} = require('../services/eventNlp.service');
 
 const formatNameFromEmail = (email = '') => {
   const local = String(email).split('@')[0] || 'user';
@@ -279,6 +283,60 @@ exports.getEvents = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Error fetching events',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Get NLP recommendations for current user
+ * GET /api/events/recommendations
+ */
+exports.getRecommendedEvents = async (req, res) => {
+  try {
+    const limit = Math.max(1, Math.min(12, parseInt(req.query.limit, 10) || 6));
+    const [events, user] = await Promise.all([
+      Event.find().sort({ startTime: 1 }).lean(),
+      User.findById(req.userId)
+        .select('email interests travelStyles bio location')
+        .lean(),
+    ]);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const recommendations = recommendEventsForUser({
+      events,
+      userProfile: user,
+      userEmail: req.userEmail,
+      limit,
+    });
+
+    const enriched = await Promise.all(
+      recommendations.map(async (item) => {
+        const enrichedEvent = await withEnrichedParticipants(item.event);
+        return {
+          ...enrichedEvent,
+          recommendationScore: item.score,
+          recommendationReason: item.reason,
+        };
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      events: enriched,
+      count: enriched.length,
+    });
+  } catch (error) {
+    console.error('Error fetching recommendations:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching recommendations',
       error: error.message,
     });
   }

@@ -1,6 +1,8 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
-const { createFollowNotification } = require('./notification.controller');
+const crypto = require('crypto');
+const { createFollowNotification, createFollowBackNotification } = require('./notification.controller');
+const { sendForgotPasswordEmail } = require('../services/email.service');
 
 // Helper function to generate JWT token
 const generateToken = (userId, userEmail) => {
@@ -207,6 +209,141 @@ exports.login = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Login failed',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * FORGOT PASSWORD - Generate a temporary password and send it via email
+ * POST /api/auth/forgot-password
+ */
+exports.forgotPassword = async (req, res) => {
+  try {
+    const email = String(req.body.email || '').trim().toLowerCase();
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required',
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email',
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    // Avoid revealing whether an email exists in the system.
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        message: 'If an account exists, a new password has been sent to the registered email.',
+      });
+    }
+
+    const temporaryPassword = crypto
+      .randomBytes(9)
+      .toString('base64')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .slice(0, 12);
+
+    user.passwordHash = temporaryPassword;
+    await user.save();
+
+    const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Traveler';
+    await sendForgotPasswordEmail({
+      toEmail: user.email,
+      temporaryPassword,
+      userName,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'If an account exists, a new password has been sent to the registered email.',
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to process forgot password request',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * CHANGE PASSWORD - Update the current user's password after verifying the old one
+ * PUT /api/auth/change-password
+ */
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const currentPassword = String(req.body.currentPassword || '');
+    const newPassword = String(req.body.newPassword || '');
+    const confirmPassword = String(req.body.confirmPassword || '');
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide current password, new password, and confirm password',
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 8 characters long',
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password and confirm password do not match',
+      });
+    }
+
+    const user = await User.findById(userId).select('+passwordHash');
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    if (user.authProvider !== 'email' || !user.passwordHash) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password change is only available for email accounts',
+      });
+    }
+
+    const passwordMatches = await user.matchPassword(currentPassword);
+    if (!passwordMatches) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect',
+      });
+    }
+
+    user.passwordHash = newPassword;
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: 'Password updated successfully',
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to change password',
       error: error.message,
     });
   }
@@ -711,6 +848,8 @@ exports.followUser = async (req, res) => {
       });
     }
 
+    const isFollowBack = (userToFollow.following || []).some((id) => String(id) === String(currentUserId));
+
     // Add to following list
     currentUser.following.push(userId);
     await currentUser.save();
@@ -719,8 +858,12 @@ exports.followUser = async (req, res) => {
     userToFollow.followers.push(currentUserId);
     await userToFollow.save();
 
-    // Create follow notification
-    await createFollowNotification(currentUserId, userId);
+    // Create follow or follow-back notification
+    if (isFollowBack) {
+      await createFollowBackNotification(currentUserId, userId);
+    } else {
+      await createFollowNotification(currentUserId, userId);
+    }
 
     return res.json({
       success: true,

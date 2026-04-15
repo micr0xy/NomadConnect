@@ -17,12 +17,29 @@ export default function EventsPage() {
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState(null);
+  const [mapCenter, setMapCenter] = useState([27.7172, 85.324]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
 
   // Fetch events on page load
   useEffect(() => {
     fetchEvents();
+  }, []);
+
+  useEffect(() => {
+    const handlePlaceSelected = (event) => {
+      const place = event.detail;
+      if (!place) {
+        return;
+      }
+
+      setSelectedPosition(place);
+      setMapCenter([place.lat, place.lng]);
+      setModalOpen(true);
+    };
+
+    window.addEventListener('nomad:place-selected', handlePlaceSelected);
+    return () => window.removeEventListener('nomad:place-selected', handlePlaceSelected);
   }, []);
 
   const fetchEvents = async () => {
@@ -49,9 +66,15 @@ export default function EventsPage() {
   }));
 
   // Handle map click
-  const handleMapClick = (latlng) => {
-    setSelectedPosition(latlng);
+  const openCreateModalAtLocation = (location) => {
+    setSelectedPosition(location);
+    setMapCenter([location.lat, location.lng]);
     setModalOpen(true);
+  };
+
+  // Handle map click
+  const handleMapClick = (latlng) => {
+    openCreateModalAtLocation(latlng);
   };
 
   // Handle event created
@@ -88,7 +111,7 @@ export default function EventsPage() {
       <div className="events-container">
         <div className="map-section">
           <Map
-            center={[27.7172, 85.324]} // Kathmandu
+            center={mapCenter}
             zoom={13}
             markers={mapMarkers}
             height="100%"

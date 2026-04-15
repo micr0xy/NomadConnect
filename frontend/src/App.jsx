@@ -9,13 +9,16 @@ import ProtectedLayout from './components/ProtectedLayout'
 import ProtectedRoute from './components/ProtectedRoute'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import SignupPage from './pages/SignupPage'
 import EventsPage from './pages/EventsPage'
 import EventChatPage from './pages/EventChatPage'
 import DashboardPage from './pages/DashboardPage'
+import ChangePasswordPage from './pages/ChangePasswordPage'
 import ProfilePage from './pages/ProfilePage'
 import AdminPage from './pages/AdminPage'
 import MessagesPage from './pages/MessagesPage'
+import MessagesHubPage from './pages/MessagesHubPage'
 import useAuthStore from './store/authStore'
 
 function AppContent() {
@@ -32,11 +35,11 @@ function AppContent() {
   }, [checkAuth, isHydrated, hasCheckedAuth])
 
   // Determine if current route is protected
-  const protectedRoutes = ['/events', '/dashboard', '/profile', '/admin', '/messages']
+  const protectedRoutes = ['/events', '/dashboard', '/profile', '/admin', '/messages', '/change-password']
   const isProtectedRoute = protectedRoutes.some(route => 
     location.pathname === route || location.pathname.startsWith(route + '/')
   )
-  const authRoutes = ['/login', '/signup']
+  const authRoutes = ['/login', '/signup', '/forgot-password']
   const isAuthRoute = authRoutes.includes(location.pathname)
   const shouldShowNavbar = !isProtectedRoute && location.pathname !== '/' && !isAuthRoute
 
@@ -82,6 +85,19 @@ function AppContent() {
                 transition={{ duration: 0.3 }}
               >
                 <SignupPage />
+              </motion.div>
+            }
+          />
+          <Route
+            path="/forgot-password"
+            element={
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ForgotPasswordPage />
               </motion.div>
             }
           />
@@ -137,6 +153,23 @@ function AppContent() {
             }
           />
           <Route
+            path="/change-password"
+            element={
+              <ProtectedRoute>
+                <ProtectedLayout>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <ChangePasswordPage />
+                  </motion.div>
+                </ProtectedLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/profile"
             element={
               <ProtectedRoute>
@@ -182,6 +215,23 @@ function AppContent() {
                     transition={{ duration: 0.3 }}
                   >
                     <AdminPage />
+                  </motion.div>
+                </ProtectedLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/messages"
+            element={
+              <ProtectedRoute>
+                <ProtectedLayout>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <MessagesHubPage />
                   </motion.div>
                 </ProtectedLayout>
               </ProtectedRoute>

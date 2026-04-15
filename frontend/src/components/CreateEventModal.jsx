@@ -146,6 +146,7 @@ const CreateEventModal = ({ isOpen, onClose, selectedPosition, onEventCreated })
         location: {
           lng: selectedPosition.lng,
           lat: selectedPosition.lat,
+          address: selectedPosition.label || '',
         },
         maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants) : null,
       };
@@ -189,7 +190,8 @@ const CreateEventModal = ({ isOpen, onClose, selectedPosition, onEventCreated })
 
         {selectedPosition && (
           <div className="location-info">
-            <p>📍 Location: {selectedPosition.lat.toFixed(4)}, {selectedPosition.lng.toFixed(4)}</p>
+            <p>📍 Location: {selectedPosition.label || `${selectedPosition.lat.toFixed(4)}, ${selectedPosition.lng.toFixed(4)}`}</p>
+            <small>{selectedPosition.label ? `${selectedPosition.lat.toFixed(4)}, ${selectedPosition.lng.toFixed(4)}` : 'Picked from the map'}</small>
           </div>
         )}
 

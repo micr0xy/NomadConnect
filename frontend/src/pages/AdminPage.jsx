@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import useAuthStore from '../store/authStore';
-import { listUsers, setUserBlocked } from '../services/adminApi';
+import { listUsers, setUserBlocked, broadcastNotification } from '../services/adminApi';
 import { listEvents, deleteEvent } from '../services/eventsApi';
 import './AdminPage.css';
 
@@ -11,6 +11,13 @@ export default function AdminPage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [notificationForm, setNotificationForm] = useState({
+    title: '',
+    message: '',
+    imageUrl: '',
+  });
+  const [sendingNotification, setSendingNotification] = useState(false);
 
   const loadData = async () => {
     try {
@@ -52,6 +59,32 @@ export default function AdminPage() {
     }
   };
 
+  const handleBroadcastSubmit = async (event) => {
+    event.preventDefault();
+    setError('');
+    setNotice('');
+
+    const title = String(notificationForm.title || '').trim();
+    const message = String(notificationForm.message || '').trim();
+    const imageUrl = String(notificationForm.imageUrl || '').trim();
+
+    if (!title || !message) {
+      setError('Please provide notification title and message');
+      return;
+    }
+
+    try {
+      setSendingNotification(true);
+      const response = await broadcastNotification({ title, message, imageUrl });
+      setNotice(response?.message || 'Notification sent successfully');
+      setNotificationForm({ title: '', message: '', imageUrl: '' });
+    } catch (err) {
+      setError(typeof err === 'string' ? err : 'Failed to send notification');
+    } finally {
+      setSendingNotification(false);
+    }
+  };
+
   if (user?.role !== 'admin') {
     return <div className="admin-page"><p className="admin-error">Admin access required.</p></div>;
   }
@@ -63,10 +96,45 @@ export default function AdminPage() {
       </div>
 
       {error && <p className="admin-error">{error}</p>}
+      {notice && <p className="admin-notice">{notice}</p>}
       {loading && <p>Loading...</p>}
 
       {!loading && (
         <>
+          <section className="admin-section">
+            <h2>Send Notification to All Users</h2>
+            <p className="admin-subtext">Recipients: {Math.max(0, users.filter((u) => u.role !== 'admin').length)} users</p>
+            <form className="admin-broadcast-form" onSubmit={handleBroadcastSubmit}>
+              <input
+                type="text"
+                value={notificationForm.title}
+                onChange={(e) => setNotificationForm((prev) => ({ ...prev, title: e.target.value }))}
+                placeholder="Notification title"
+                maxLength={120}
+                disabled={sendingNotification}
+              />
+              <textarea
+                value={notificationForm.message}
+                onChange={(e) => setNotificationForm((prev) => ({ ...prev, message: e.target.value }))}
+                placeholder="Write your custom notification message"
+                rows={4}
+                maxLength={600}
+                disabled={sendingNotification}
+              />
+              <input
+                type="url"
+                value={notificationForm.imageUrl}
+                onChange={(e) => setNotificationForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
+                placeholder="Optional image URL (for ad-style notification)"
+                maxLength={1000}
+                disabled={sendingNotification}
+              />
+              <button type="submit" className="admin-btn" disabled={sendingNotification}>
+                {sendingNotification ? 'Sending...' : 'Send to All Users'}
+              </button>
+            </form>
+          </section>
+
           <section className="admin-section">
             <h2>Users</h2>
             <div className="admin-table-wrap">

@@ -306,6 +306,7 @@
 
 /* ── Activity list ── */
 .activity-list { display: flex; flex-direction: column; gap: 2px; }
+.recommended-list { gap: 8px; }
 .activity-row {
   display: flex; align-items: center; gap: 14px;
   padding: 14px 16px; border-radius: 12px; border: none;
@@ -323,6 +324,12 @@
 .activity-info { flex: 1; min-width: 0; }
 .activity-title { margin: 0 0 3px 0; font-size: 14px; font-weight: 600; color: #1a3020; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .activity-meta { margin: 0; font-size: 11px; color: #9aaa9c; }
+.recommendation-reason {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: #2f6f3d;
+  font-weight: 600;
+}
 .activity-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .joined-badge {
   padding: 2px 8px; background: rgba(58,130,70,0.1); color: #3a8048;

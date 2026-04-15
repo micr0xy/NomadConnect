@@ -95,6 +95,12 @@ export default function Sidebar() {
       label: 'Events',
       path: '/events',
       badge: null
+    },
+    {
+      icon: <BiMessageRounded size={20} />,
+      label: 'Messages',
+      path: '/messages',
+      badge: null
     }
   ]
 

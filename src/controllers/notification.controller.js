@@ -11,12 +11,24 @@ exports.getNotifications = async (req, res) => {
     const userId = req.userId;
     const { limit = 20, skip = 0 } = req.query;
 
+    const currentUser = await User.findById(userId).select('following').lean();
+    const followingSet = new Set((currentUser?.following || []).map((id) => String(id)));
+
     const notifications = await Notification.find({ recipientId: userId })
       .populate('senderId', 'firstName lastName profileImage email')
       .populate('targetId')
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
       .skip(parseInt(skip));
+
+    const notificationsWithFollowState = notifications.map((notification) => {
+      const serialized = notification.toObject();
+      const senderId = serialized?.senderId?._id || serialized?.senderId;
+      return {
+        ...serialized,
+        isFollowingSender: followingSet.has(String(senderId || '')),
+      };
+    });
 
     const totalCount = await Notification.countDocuments({ recipientId: userId });
     const unreadCount = await Notification.countDocuments({
@@ -26,7 +38,7 @@ exports.getNotifications = async (req, res) => {
 
     return res.json({
       success: true,
-      notifications,
+      notifications: notificationsWithFollowState,
       totalCount,
       unreadCount,
     });
@@ -152,6 +164,72 @@ exports.deleteNotification = async (req, res) => {
 };
 
 /**
+ * ADMIN BROADCAST NOTIFICATION - Send custom notification to all registered users
+ * POST /api/notifications/admin/broadcast
+ * Protected admin route
+ */
+exports.broadcastNotification = async (req, res) => {
+  try {
+    const senderId = req.userId;
+    const title = String(req.body.title || '').trim();
+    const message = String(req.body.message || '').trim();
+    const imageUrl = String(req.body.imageUrl || '').trim();
+
+    if (!title || !message) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title and message are required',
+      });
+    }
+
+    if (imageUrl) {
+      const isValidImageUrl = /^https?:\/\//i.test(imageUrl);
+      if (!isValidImageUrl) {
+        return res.status(400).json({
+          success: false,
+          message: 'Image URL must start with http:// or https://',
+        });
+      }
+    }
+
+    const recipients = await User.find({ _id: { $ne: senderId } }).select('_id');
+    if (!recipients.length) {
+      return res.status(200).json({
+        success: true,
+        message: 'No recipients found',
+        sentCount: 0,
+      });
+    }
+
+    const notifications = recipients.map((recipient) => ({
+      recipientId: recipient._id,
+      senderId,
+      type: 'announcement',
+      title,
+      imageUrl,
+      targetId: senderId,
+      message,
+      isRead: false,
+    }));
+
+    await Notification.insertMany(notifications);
+
+    return res.json({
+      success: true,
+      message: 'Notification sent to all users',
+      sentCount: notifications.length,
+    });
+  } catch (error) {
+    console.error('Broadcast notification error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to send notification',
+      error: error.message,
+    });
+  }
+};
+
+/**
  * CREATE FOLLOW NOTIFICATION
  * Called internally when a user follows another user
  */
@@ -171,6 +249,29 @@ exports.createFollowNotification = async (followerId, followedId) => {
     return notification;
   } catch (error) {
     console.error('Create follow notification error:', error);
+  }
+};
+
+/**
+ * CREATE FOLLOW BACK NOTIFICATION
+ * Called when user follows back someone already following them
+ */
+exports.createFollowBackNotification = async (followerId, followedId) => {
+  try {
+    const follower = await User.findById(followerId).select('firstName lastName');
+
+    const notification = await Notification.create({
+      recipientId: followedId,
+      senderId: followerId,
+      type: 'follow_back',
+      targetId: followerId,
+      message: `${follower.firstName} ${follower.lastName} followed you back`,
+      isRead: false,
+    });
+
+    return notification;
+  } catch (error) {
+    console.error('Create follow back notification error:', error);
   }
 };
 

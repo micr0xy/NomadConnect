@@ -120,6 +120,123 @@ function MapUpdater({ center, zoom }) {
   return null
 }
 
+function PlaceSearchControl({
+  onPlaceSelect,
+  placeholder = 'Search for a place',
+}) {
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    const trimmedQuery = query.trim()
+
+    if (trimmedQuery.length < 3) {
+      setResults([])
+      setLoading(false)
+      setError('')
+      return undefined
+    }
+
+    const controller = new AbortController()
+    let active = true
+    const timeoutId = window.setTimeout(async () => {
+      if (!active) {
+        return
+      }
+
+      setLoading(true)
+      setError('')
+
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(trimmedQuery)}&addressdetails=1&limit=6`,
+          { signal: controller.signal }
+        )
+
+        if (!response.ok) {
+          throw new Error('Search failed')
+        }
+
+        const data = await response.json()
+        if (active) {
+          setResults(Array.isArray(data) ? data : [])
+        }
+      } catch (searchError) {
+        if (active && searchError.name !== 'AbortError') {
+          setError('Unable to load place results')
+          setResults([])
+        }
+      } finally {
+        if (active) {
+          setLoading(false)
+        }
+      }
+    }, 300)
+
+    return () => {
+      active = false
+      controller.abort()
+      window.clearTimeout(timeoutId)
+    }
+  }, [query])
+
+  const handleSelect = (result) => {
+    const lat = Number(result.lat)
+    const lng = Number(result.lon)
+
+    onPlaceSelect?.({
+      lat,
+      lng,
+      label: result.display_name,
+      name: result.name || result.display_name,
+    })
+
+    setQuery(result.display_name)
+    setResults([])
+  }
+
+  return (
+    <div className="map-place-search">
+      <div className="map-place-search__field">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={placeholder}
+          className="map-place-search__input"
+        />
+        {loading && <span className="map-place-search__status">Searching</span>}
+      </div>
+
+      {error && <div className="map-place-search__error">{error}</div>}
+
+      {results.length > 0 && (
+        <div className="map-place-search__results">
+          {results.map((result) => (
+            <button
+              key={`${result.place_id}-${result.lat}-${result.lon}`}
+              type="button"
+              className="map-place-search__result"
+              onClick={() => handleSelect(result)}
+            >
+              <span className="map-place-search__result-title">
+                {result.name || result.display_name}
+              </span>
+              <span className="map-place-search__result-subtitle">{result.display_name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {!loading && query.trim().length >= 3 && results.length === 0 && !error && (
+        <div className="map-place-search__empty">No matching places found</div>
+      )}
+    </div>
+  )
+}
+
 // Component to handle map click events
 function MapClickHandler({ onMapClick }) {
   useMapEvents({
@@ -143,6 +260,9 @@ export default function Map({
   className = '',
   showUserLocation = false,
   onMapClick = null,
+  enablePlaceSearch = false,
+  onPlaceSelect = null,
+  placeSearchPlaceholder = 'Search for a place',
   selectedPosition = null,
   onMarkerClick = null,
   userAvatar = '',
@@ -152,6 +272,11 @@ export default function Map({
   const [userLocation, setUserLocation] = useState(null)
   const [mapCenter, setMapCenter] = useState(center)
   const [mapZoom, setMapZoom] = useState(zoom)
+
+  useEffect(() => {
+    setMapCenter(center)
+    setMapZoom(zoom)
+  }, [center, zoom])
 
   // Get user's geolocation
   useEffect(() => {
@@ -174,6 +299,21 @@ export default function Map({
 
   return (
     <div className={`relative w-full h-full ${className}`}>
+      {enablePlaceSearch && (
+        <div className="map-place-search-shell">
+          <PlaceSearchControl
+            onPlaceSelect={(place) => {
+              setMapCenter([place.lat, place.lng])
+              setMapZoom(15)
+              if (onPlaceSelect) {
+                onPlaceSelect(place)
+              }
+            }}
+            placeholder={placeSearchPlaceholder}
+          />
+        </div>
+      )}
+
       <MapContainer
         center={mapCenter}
         zoom={mapZoom}

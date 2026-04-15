@@ -15,6 +15,20 @@ export const listEvents = async () => {
 };
 
 /**
+ * Get NLP-based recommended events for current user
+ * GET /api/events/recommendations (protected)
+ */
+export const getRecommendedEvents = async (limit = 6) => {
+  try {
+    const response = await api.get(`/api/events/recommendations?limit=${limit}`);
+    return response.data.events || [];
+  } catch (error) {
+    console.error('Error fetching recommended events:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Failed to fetch recommendations';
+  }
+};
+
+/**
  * Create a new event
  * POST /api/events (protected)
  * @param {Object} eventData - {title, description, startTime, location: {lng, lat}, maxParticipants}

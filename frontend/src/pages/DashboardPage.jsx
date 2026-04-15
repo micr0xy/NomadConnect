@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { FaCalendar, FaUsers, FaArrowRight, FaCompass, FaMapMarkerAlt, FaLeaf } from 'react-icons/fa'
-import { listEvents } from '../services/eventsApi'
+import { FaCalendar, FaUsers, FaArrowRight, FaCompass, FaShieldAlt, FaLeaf } from 'react-icons/fa'
+import { listEvents, getRecommendedEvents } from '../services/eventsApi'
 import useAuthStore from '../store/authStore'
 import './DashboardPage.css'
 
@@ -10,6 +10,7 @@ export default function DashboardPage() {
   const user = useAuthStore((state) => state.user)
   const navigate = useNavigate()
   const [events, setEvents] = useState([])
+  const [recommendedEvents, setRecommendedEvents] = useState([])
   const [myEvents, setMyEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
@@ -25,8 +26,12 @@ export default function DashboardPage() {
   const fetchEvents = async () => {
     setLoading(true)
     try {
-      const fetchedEvents = await listEvents()
+      const [fetchedEvents, fetchedRecommendations] = await Promise.all([
+        listEvents(),
+        getRecommendedEvents(6).catch(() => []),
+      ])
       setEvents(fetchedEvents)
+      setRecommendedEvents(fetchedRecommendations)
       
       const now = new Date()
       const normalizedUserEmail = (user?.email || '').toLowerCase()
@@ -129,15 +134,61 @@ export default function DashboardPage() {
             </div>
             <FaArrowRight className="action-arrow" size={16} />
           </button>
-          <button onClick={() => navigate('/profile')} className="action-card">
-            <div className="action-icon" style={{ background: 'rgba(122,184,96,0.15)', color: '#7ab860' }}><FaMapMarkerAlt size={22} /></div>
+          <button onClick={() => navigate('/change-password')} className="action-card">
+            <div className="action-icon" style={{ background: 'rgba(122,184,96,0.15)', color: '#7ab860' }}><FaShieldAlt size={22} /></div>
             <div className="action-content">
-              <h3>Edit Profile</h3>
-              <p>Update your travel style & bio</p>
+              <h3>Change Password</h3>
+              <p>Update the password tied to your account</p>
             </div>
             <FaArrowRight className="action-arrow" size={16} />
           </button>
         </div>
+      </div>
+
+      <div className="recent-section">
+        <div className="recent-section-header">
+          <h2>Recommended For You</h2>
+          <button onClick={() => navigate('/events')} className="see-all-btn">Browse all →</button>
+        </div>
+
+        {loading ? (
+          <div className="loading-skeleton">
+            {[1, 2, 3].map(i => <div key={i} className="skeleton-card" />)}
+          </div>
+        ) : recommendedEvents.length > 0 ? (
+          <div className="activity-list recommended-list">
+            {recommendedEvents.map((event, idx) => (
+              <motion.button
+                key={`recommended-${event._id}`}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                onClick={() => navigate('/events')}
+                className="activity-row"
+              >
+                <div className="activity-icon">
+                  {CATEGORY_ICONS[event.category] || '📌'}
+                </div>
+                <div className="activity-info">
+                  <p className="activity-title">{event.title}</p>
+                  <p className="activity-meta">{formatEventTime(event.startTime)} · {event.participants?.length || 0} participants</p>
+                  <p className="recommendation-reason">{event.recommendationReason || 'Recommended for your interests'}</p>
+                </div>
+                <div className="activity-right">
+                  <span className="event-badge">{event.category || 'other'}</span>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state">
+            <span style={{ fontSize: '2rem' }}>🧭</span>
+            <p>No personalized suggestions yet. Join a few events and add interests in your profile.</p>
+            <button onClick={() => navigate('/events')} className="empty-action">
+              Explore Events
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── Activity list (inspired by reference image) ── */}

@@ -123,12 +123,66 @@
   position: relative;
 }
 
+.notification-item.redirecting {
+  animation: notificationRedirectPulse 220ms ease;
+  background: rgba(58, 130, 70, 0.12);
+}
+
+@keyframes notificationRedirectPulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  45% {
+    transform: scale(0.985);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 .notification-item:hover {
   background: rgba(58, 130, 70, 0.03);
 }
 
 .notification-item.unread {
   background: rgba(58, 130, 70, 0.06);
+}
+
+.announcement-item {
+  gap: 0;
+}
+
+.announcement-item .notification-content {
+  width: 100%;
+}
+
+.announcement-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #153322;
+  line-height: 1.3;
+}
+
+.announcement-message {
+  margin: 0;
+  font-size: 12px;
+  color: #1f3a2a;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.announcement-image {
+  display: block;
+  width: 100%;
+  border-radius: 10px;
+  margin-top: 10px;
+  border: 1px solid rgba(58, 130, 70, 0.16);
+  object-fit: cover;
+  max-height: 180px;
 }
 
 .notification-avatar {
@@ -198,6 +252,11 @@
 
 .follow-back-btn:hover {
   background: #2d6b3a;
+}
+
+.follow-back-btn:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
 }
 
 .notification-delete {

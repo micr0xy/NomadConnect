@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { FaBell } from 'react-icons/fa'
 import {
   getNotifications,
@@ -6,14 +7,17 @@ import {
   deleteNotification,
   markAllAsRead,
 } from '../services/notificationsApi'
-import { followUser } from '../services/profileApi'
+import { followUser, unfollowUser } from '../services/profileApi'
 import './NotificationIcon.css'
 
 export default function NotificationIcon() {
+  const navigate = useNavigate()
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [redirectingId, setRedirectingId] = useState('')
+  const [followActionLoadingIds, setFollowActionLoadingIds] = useState({})
 
   useEffect(() => {
     fetchNotifications()
@@ -34,7 +38,21 @@ export default function NotificationIcon() {
     }
   }
 
+  const getProfileRouteFromNotification = (notif) => {
+    const senderEmail = notif?.senderId?.email
+    if (senderEmail) {
+      return `/profile/${encodeURIComponent(String(senderEmail).toLowerCase())}`
+    }
+    return '/profile'
+  }
+
   const handleNotificationClick = async (notif) => {
+    if (!notif?._id) {
+      return
+    }
+
+    setRedirectingId(notif._id)
+
     if (!notif.isRead) {
       try {
         await markAsRead(notif._id)
@@ -46,16 +64,51 @@ export default function NotificationIcon() {
         console.error('Failed to mark as read:', error)
       }
     }
+
+    window.setTimeout(() => {
+      if (notif.type !== 'announcement') {
+        navigate(getProfileRouteFromNotification(notif))
+      }
+      setIsOpen(false)
+      setRedirectingId('')
+    }, 220)
   }
 
-  const handleFollowBack = async (notif) => {
+  const handleFollowToggle = async (notif) => {
+    if (!notif?._id || !notif?.senderId?._id) {
+      return
+    }
+
+    setFollowActionLoadingIds((prev) => ({
+      ...prev,
+      [notif._id]: true,
+    }))
+
     try {
-      await followUser(notif.senderId._id)
+      if (notif.isFollowingSender) {
+        await unfollowUser(notif.senderId._id)
+      } else {
+        await followUser(notif.senderId._id)
+      }
+
       setNotifications((prev) =>
-        prev.map((n) => (n._id === notif._id ? { ...n, actionPerformed: true } : n))
+        prev.map((n) => (
+          n._id === notif._id
+            ? {
+              ...n,
+              isFollowingSender: !Boolean(n.isFollowingSender),
+              actionPerformed: !Boolean(n.isFollowingSender),
+            }
+            : n
+        ))
       )
     } catch (error) {
-      console.error('Failed to follow back:', error)
+      console.error('Failed to update follow status:', error)
+    } finally {
+      setFollowActionLoadingIds((prev) => ({
+        ...prev,
+        [notif._id]: false,
+      }))
     }
   }
 
@@ -111,50 +164,76 @@ export default function NotificationIcon() {
               {notifications.map((notif) => (
                 <div
                   key={notif._id}
-                  className={`notification-item ${!notif.isRead ? 'unread' : ''}`}
+                  className={`notification-item ${notif.type === 'announcement' ? 'announcement-item' : ''} ${!notif.isRead ? 'unread' : ''} ${redirectingId === notif._id ? 'redirecting' : ''}`}
                   onClick={() => handleNotificationClick(notif)}
                 >
-                  <div className="notification-avatar">
-                    {notif.senderId?.profileImage ? (
-                      <img src={notif.senderId.profileImage} alt="User" />
-                    ) : (
-                      <div className="avatar-placeholder">
-                        {notif.senderId?.firstName?.charAt(0)}
-                        {notif.senderId?.lastName?.charAt(0)}
-                      </div>
-                    )}
-                  </div>
+                  {notif.type !== 'announcement' && (
+                    <div className="notification-avatar">
+                      {notif.senderId?.profileImage ? (
+                        <img src={notif.senderId.profileImage} alt="User" />
+                      ) : (
+                        <div className="avatar-placeholder">
+                          {notif.senderId?.firstName?.charAt(0)}
+                          {notif.senderId?.lastName?.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <div className="notification-content">
-                    <p className="notification-message">
-                      <strong>{notif.senderId?.firstName}</strong> {notif.message}
-                    </p>
-                    <p className="notification-time">
-                      {new Date(notif.createdAt).toLocaleDateString()}
-                    </p>
+                    {notif.type === 'announcement' ? (
+                      <>
+                        <p className="announcement-title">{notif.title || 'Update'}</p>
+                        <p className="announcement-message">{notif.message}</p>
+                        {notif.imageUrl && (
+                          <img
+                            src={notif.imageUrl}
+                            alt={notif.title || 'Announcement image'}
+                            className="announcement-image"
+                          />
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {notif.title && <p className="notification-time">{notif.title}</p>}
+                        <p className="notification-message">
+                          <strong>{notif.senderId?.firstName}</strong> {notif.message}
+                        </p>
+                        <p className="notification-time">
+                          {new Date(notif.createdAt).toLocaleDateString()}
+                        </p>
+                      </>
+                    )}
 
-                    {notif.type === 'follow' && !notif.actionPerformed && (
+                    {notif.type === 'follow' && (
                       <button
                         className="follow-back-btn"
+                        disabled={Boolean(followActionLoadingIds[notif._id])}
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleFollowBack(notif)
+                          handleFollowToggle(notif)
                         }}
                       >
-                        Follow Back
+                        {followActionLoadingIds[notif._id]
+                          ? 'Following...'
+                          : notif.isFollowingSender
+                            ? 'Following'
+                            : 'Follow Back'}
                       </button>
                     )}
                   </div>
 
-                  <button
-                    className="notification-delete"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDeleteNotification(notif._id)
-                    }}
-                  >
-                    ×
-                  </button>
+                  {notif.type !== 'announcement' && (
+                    <button
+                      className="notification-delete"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteNotification(notif._id)
+                      }}
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

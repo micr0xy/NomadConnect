@@ -325,6 +325,9 @@ export default function ProfilePage() {
   }
 
   const displayPhotos = (profileData?.photos || []).slice(0, 6)
+  const usernameLabel =
+    profileData?.instagramHandle ||
+    String(profileData?.email || `${profileData?.firstName || 'traveler'}`).split('@')[0]
 
   const renderChipGroup = (items, emptyText) => {
     if (!items || items.length === 0) {
@@ -418,59 +421,42 @@ export default function ProfilePage() {
             </>
           )}
 
-          <div className="hero-avatar-wrap">
-            {(editing ? form.profileImage : profileData?.profileImage) ? (
-              <img src={editing ? form.profileImage : profileData?.profileImage} alt={profileData.firstName} className="profile-avatar" />
-            ) : (
-              <div className="profile-avatar-placeholder">
-                <span>{profileData?.firstName?.charAt(0)}{profileData?.lastName?.charAt(0)}</span>
+          <div className="ig-profile-top">
+            <div className="hero-avatar-wrap">
+              {(editing ? form.profileImage : profileData?.profileImage) ? (
+                <img src={editing ? form.profileImage : profileData?.profileImage} alt={profileData.firstName} className="profile-avatar" />
+              ) : (
+                <div className="profile-avatar-placeholder">
+                  <span>{profileData?.firstName?.charAt(0)}{profileData?.lastName?.charAt(0)}</span>
+                </div>
+              )}
+              {canEdit && editing && (
+                <label className="avatar-edit-btn" htmlFor="avatar-upload-input">
+                  Change
+                </label>
+              )}
+              {canEdit && editing && (
+                <input
+                  id="avatar-upload-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarFileChange}
+                  className="hidden-avatar-input"
+                />
+              )}
+              <div className="profile-progress">{profileStrength}%</div>
+            </div>
+
+            <div className="ig-profile-main">
+              <div className="ig-handle-row">
+                <h2 className="hero-name">{usernameLabel}</h2>
+                {profileData?.isVerified && <MdVerifiedUser className="ig-verified-icon" />}
               </div>
-            )}
-            {canEdit && editing && (
-              <label className="avatar-edit-btn" htmlFor="avatar-upload-input">
-                Change
-              </label>
-            )}
-            {canEdit && editing && (
-              <input
-                id="avatar-upload-input"
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarFileChange}
-                className="hidden-avatar-input"
-              />
-            )}
-            <div className="profile-progress">{profileStrength}%</div>
-          </div>
-
-          <h2 className="hero-name">
-            {profileData?.firstName} {profileData?.lastName}
-            {profileData?.age ? `, ${profileData.age}` : ''}
-          </h2>
-
-          <p className="hero-subtitle">{profileData?.location || 'Location not shared'}</p>
-
-          <div className="hero-badges">
-            {profileData?.isVerified && (
-              <span className="hero-pill"><MdVerifiedUser /> Verified</span>
-            )}
-            <span className="hero-pill"><FaMapMarkedAlt /> {countriesCount} countries</span>
-          </div>
-
-          {profileData?.instagramHandle && (
-            <a
-              className="instagram-pill"
-              href={`https://instagram.com/${profileData.instagramHandle}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <FaInstagram /> @{profileData.instagramHandle}
-            </a>
-          )}
-
-          {!editing && (
-            <>
-              <div className="profile-stats">
+              <div className="profile-stats ig-stats">
+                <div className="profile-stat-card">
+                  <p className="stat-big">{countriesCount}</p>
+                  <p className="stat-lbl">Countries</p>
+                </div>
                 <div className="profile-stat-card">
                   <p className="stat-big">{profileData?.followersCount || profileData?.followers?.length || 0}</p>
                   <p className="stat-lbl">Followers</p>
@@ -479,15 +465,33 @@ export default function ProfilePage() {
                   <p className="stat-big">{profileData?.followingCount || profileData?.following?.length || 0}</p>
                   <p className="stat-lbl">Following</p>
                 </div>
-                <div className="profile-stat-card">
-                  <p className="stat-big">{countriesCount}</p>
-                  <p className="stat-lbl">Countries</p>
+              </div>
+
+              <div className="ig-bio-block">
+                <p className="ig-display-name">
+                  {profileData?.firstName} {profileData?.lastName}
+                  {profileData?.age ? `, ${profileData.age}` : ''}
+                </p>
+                <p className="hero-subtitle">{profileData?.location || 'Location not shared'}</p>
+                <p className="about-text ig-about-inline">{profileData?.bio || 'No bio shared yet.'}</p>
+                {profileData?.instagramHandle && (
+                  <a
+                    className="instagram-pill"
+                    href={`https://instagram.com/${profileData.instagramHandle}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <FaInstagram /> @{profileData.instagramHandle}
+                  </a>
+                )}
+                <div className="hero-badges">
+                  <span className="hero-pill"><FaMapMarkedAlt /> {countriesCount} countries</span>
                 </div>
               </div>
 
-              {!canEdit && (
+              {!editing && !canEdit && (
                 <div className="profile-actions">
-                  <button 
+                  <button
                     className={`follow-btn ${isFollowing ? 'following' : ''}`}
                     onClick={handleFollowClick}
                     disabled={followLoading}
@@ -498,12 +502,12 @@ export default function ProfilePage() {
                       </>
                     ) : (
                       <>
-                        <FaUserPlus /> Follow
+                        <FaUserPlus /> Follow Back
                       </>
                     )}
                   </button>
                   {canPrivateMessage() ? (
-                    <button 
+                    <button
                       className="message-btn"
                       onClick={handleMessageClick}
                       disabled={followLoading}
@@ -517,7 +521,11 @@ export default function ProfilePage() {
                   )}
                 </div>
               )}
-            </>
+            </div>
+          </div>
+
+          {!editing && (
+            <div className="ig-header-divider" />
           )}
 
         </div>
@@ -633,14 +641,16 @@ export default function ProfilePage() {
           </div>
 
           <div className="profile-card photos-card">
-            <h3>Photos</h3>
-            <div className="photo-grid">
+            <h3>Posts</h3>
+            <div className="photo-grid ig-post-grid">
               {displayPhotos.length > 0 ? (
-                displayPhotos.map((photo) => (
-                  <img src={photo} alt="Travel memory" key={photo} className="gallery-photo" />
+                displayPhotos.map((photo, idx) => (
+                  <div className="ig-post-tile" key={`${photo}-${idx}`}>
+                    <img src={photo} alt="Travel memory" className="gallery-photo" />
+                  </div>
                 ))
               ) : (
-                <p className="section-empty">Add photo URLs in edit mode to build your gallery</p>
+                <p className="section-empty">No posts yet</p>
               )}
             </div>
           </div>

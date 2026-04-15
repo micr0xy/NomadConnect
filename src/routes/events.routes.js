@@ -2,6 +2,7 @@ const express = require('express');
 const {
   createEvent,
   getEvents,
+  getRecommendedEvents,
   joinEvent,
   leaveEvent,
   postMessage,
@@ -17,6 +18,9 @@ router.post('/', verifyToken, createEvent);
 
 // GET /api/events - Get all events (protected)
 router.get('/', verifyToken, getEvents);
+
+// GET /api/events/recommendations - NLP recommendations for current user (protected)
+router.get('/recommendations', verifyToken, getRecommendedEvents);
 
 // POST /api/events/nlp/improve - Improve event draft with NLP (protected)
 router.post('/nlp/improve', verifyToken, improveEventDraft);

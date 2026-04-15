@@ -66,11 +66,11 @@ export default function MessagesPage() {
       className="messages-page"
     >
       <div className="messages-header">
-        <button onClick={() => navigate(-1)} className="messages-back-btn">
+        <button onClick={() => navigate('/messages')} className="messages-back-btn">
           <FaArrowLeft size={18} />
           <span>Back</span>
         </button>
-        <h1>Direct Message</h1>
+        <h1>Message</h1>
         <div style={{ width: 60 }} />
       </div>
 

@@ -17,3 +17,12 @@ export const setUserBlocked = async (userId, isBlocked) => {
     throw error.response?.data?.message || 'Failed to update user status';
   }
 };
+
+export const broadcastNotification = async ({ title, message, imageUrl = '' }) => {
+  try {
+    const response = await api.post('/api/notifications/admin/broadcast', { title, message, imageUrl });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || 'Failed to send notification';
+  }
+};

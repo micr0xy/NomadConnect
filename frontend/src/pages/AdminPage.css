@@ -58,3 +58,33 @@
   color: #b91c1c;
   margin-bottom: 12px;
 }
+
+.admin-notice {
+  color: #166534;
+  margin-bottom: 12px;
+}
+
+.admin-subtext {
+  margin: 0 0 10px;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.admin-broadcast-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-broadcast-form input,
+.admin-broadcast-form textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.92rem;
+}
+
+.admin-broadcast-form textarea {
+  resize: vertical;
+}

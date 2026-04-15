@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { GoogleLogin } from '@react-oauth/google'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import useAuthStore from '../store/authStore'
 import { jwtDecode } from 'jwt-decode'
 import Logo from '../components/Logo'
@@ -165,7 +166,12 @@ export default function LoginPage() {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-xs font-semibold text-forest-400/60 tracking-wider uppercase">Password</label>
-                <a href="#" className="text-xs text-forest-500 hover:text-forest-400 transition-colors">Forgot password?</a>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-forest-500 hover:text-forest-400 transition-colors"
+                >
+                  Forgot password?
+                </Link>
               </div>
               <input
                 type="password"

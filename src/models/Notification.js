@@ -14,8 +14,18 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['follow', 'event', 'follow_back'],
+      enum: ['follow', 'event', 'follow_back', 'announcement'],
       required: true,
+    },
+    title: {
+      type: String,
+      default: '',
+      maxlength: 120,
+    },
+    imageUrl: {
+      type: String,
+      default: '',
+      maxlength: 1000,
     },
     targetId: {
       type: mongoose.Schema.Types.ObjectId,

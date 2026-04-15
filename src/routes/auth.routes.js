@@ -3,6 +3,8 @@ const router = express.Router();
 const {
   signup,
   login,
+  forgotPassword,
+  changePassword,
   adminLogin,
   logout,
   checkauth,
@@ -21,6 +23,7 @@ const { verifyToken, verifyAdmin } = require('../middleware/auth.middleware');
  */
 router.post('/signup', signup);
 router.post('/login', login);
+router.post('/forgot-password', forgotPassword);
 router.post('/admin/login', adminLogin);
 router.post('/logout', logout);
 router.post('/google', googleAuth);
@@ -30,6 +33,7 @@ router.post('/google', googleAuth);
  */
 router.get('/checkauth', verifyToken, checkauth);
 router.put('/profile', verifyToken, updateProfile);
+router.put('/change-password', verifyToken, changePassword);
 router.get('/profile/by-email/:email', verifyToken, getPublicProfileByEmail);
 router.post('/follow/:userId', verifyToken, followUser);
 router.post('/unfollow/:userId', verifyToken, unfollowUser);

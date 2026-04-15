@@ -3,6 +3,24 @@ const natural = require('natural');
 
 const tokenizer = new natural.WordTokenizer();
 
+const STOP_WORDS = new Set([
+  'this', 'that', 'with', 'from', 'have', 'your', 'about', 'there', 'where', 'when', 'what',
+  'will', 'would', 'could', 'should', 'into', 'onto', 'over', 'under', 'than', 'then', 'them',
+  'they', 'their', 'ours', 'ourselves', 'you', 'yours', 'ours', 'just', 'some', 'more', 'very',
+  'also', 'only', 'join', 'event', 'events', 'people', 'group', 'together', 'the', 'and', 'for',
+  'are', 'was', 'were', 'been', 'to', 'of', 'in', 'on', 'at', 'is', 'it', 'a', 'an', 'or', 'as',
+]);
+
+const CATEGORY_HINTS = {
+  meetup: ['network', 'social', 'friends', 'community', 'hangout', 'meetup'],
+  travel: ['trip', 'travel', 'explore', 'journey', 'backpacking', 'tour'],
+  adventure: ['hiking', 'trek', 'climb', 'camp', 'rafting', 'adventure', 'trail'],
+  cultural: ['culture', 'museum', 'heritage', 'festival', 'art', 'tradition'],
+  food: ['food', 'eat', 'dinner', 'brunch', 'cafe', 'restaurant', 'cooking'],
+  sports: ['sports', 'football', 'cricket', 'run', 'gym', 'fitness', 'yoga'],
+  other: [],
+};
+
 const CATEGORY_INTROS = {
   meetup: [
     "Let's grab some time to hang out and meet new people!",
@@ -208,7 +226,158 @@ const improveEventDraft = ({
   };
 };
 
+const normalizeTokens = (text = '') => {
+  return tokenizer
+    .tokenize(String(text || '').toLowerCase())
+    .map((word) => natural.PorterStemmer.stem(word.replace(/[^a-z0-9]/g, '')))
+    .filter((word) => word.length >= 3 && !STOP_WORDS.has(word));
+};
+
+const buildJoinedCategoryWeights = (joinedEvents = []) => {
+  const categoryCounts = joinedEvents.reduce((acc, event) => {
+    const category = String(event.category || 'other').toLowerCase();
+    acc[category] = (acc[category] || 0) + 1;
+    return acc;
+  }, {});
+
+  const maxCount = Math.max(1, ...Object.values(categoryCounts));
+  const weights = {};
+  Object.keys(categoryCounts).forEach((category) => {
+    weights[category] = categoryCounts[category] / maxCount;
+  });
+
+  return weights;
+};
+
+const collectJoinedKeywords = (joinedEvents = []) => {
+  const frequency = {};
+
+  joinedEvents.forEach((event) => {
+    const tokens = normalizeTokens(`${event.title || ''} ${event.description || ''}`);
+    tokens.forEach((token) => {
+      frequency[token] = (frequency[token] || 0) + 1;
+    });
+  });
+
+  return new Set(
+    Object.entries(frequency)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 20)
+      .map(([token]) => token)
+  );
+};
+
+const collectInterestTokens = (userProfile = {}) => {
+  const parts = [
+    ...(userProfile.interests || []),
+    ...(userProfile.travelStyles || []),
+    userProfile.bio || '',
+    userProfile.location || '',
+  ];
+
+  return new Set(normalizeTokens(parts.join(' ')));
+};
+
+const scoreCategoryFromInterests = (interestTokens, category) => {
+  const hints = CATEGORY_HINTS[String(category || 'other').toLowerCase()] || [];
+  if (!hints.length) return 0;
+
+  const hintMatches = hints.reduce((count, hint) => {
+    return count + (interestTokens.has(natural.PorterStemmer.stem(hint)) ? 1 : 0);
+  }, 0);
+
+  return Math.min(24, hintMatches * 8);
+};
+
+const recommendEventsForUser = ({
+  events = [],
+  userProfile = {},
+  userEmail = '',
+  limit = 6,
+} = {}) => {
+  const normalizedEmail = String(userEmail || '').toLowerCase();
+  const now = new Date();
+
+  const joinedEvents = events.filter((event) => {
+    const isCreator = String(event.createdByEmail || '').toLowerCase() === normalizedEmail;
+    const isParticipant = (event.participants || []).some(
+      (participant) => String(participant.userEmail || '').toLowerCase() === normalizedEmail
+    );
+    return isCreator || isParticipant;
+  });
+
+  const joinedIds = new Set(joinedEvents.map((event) => String(event._id)));
+  const joinedCategoryWeights = buildJoinedCategoryWeights(joinedEvents);
+  const joinedKeywords = collectJoinedKeywords(joinedEvents);
+  const interestTokens = collectInterestTokens(userProfile);
+
+  const candidates = events.filter((event) => {
+    const eventId = String(event._id || '');
+    const startTime = new Date(event.startTime);
+    if (!eventId || joinedIds.has(eventId)) return false;
+    if (Number.isNaN(startTime.getTime()) || startTime <= now) return false;
+    return true;
+  });
+
+  const scored = candidates.map((event) => {
+    const category = String(event.category || 'other').toLowerCase();
+    const eventTokens = new Set(normalizeTokens(`${event.title || ''} ${event.description || ''}`));
+    const reasons = [];
+    let score = 0;
+
+    const categoryPreference = joinedCategoryWeights[category] || 0;
+    if (categoryPreference > 0) {
+      const categoryScore = Math.round(categoryPreference * 36);
+      score += categoryScore;
+      reasons.push(`You often join ${category} events`);
+    }
+
+    const interestMatchCount = [...interestTokens].filter((token) => eventTokens.has(token)).length;
+    if (interestMatchCount > 0) {
+      const interestScore = Math.min(30, interestMatchCount * 6);
+      score += interestScore;
+      reasons.push('Matches your profile interests');
+    }
+
+    const keywordMatches = [...joinedKeywords].filter((token) => eventTokens.has(token)).length;
+    if (keywordMatches > 0) {
+      const historyScore = Math.min(24, keywordMatches * 4);
+      score += historyScore;
+      reasons.push('Similar to events you joined before');
+    }
+
+    const categoryFromInterestScore = scoreCategoryFromInterests(interestTokens, category);
+    if (categoryFromInterestScore > 0) {
+      score += categoryFromInterestScore;
+      reasons.push('Category aligns with your interests');
+    }
+
+    const startTime = new Date(event.startTime);
+    const daysUntil = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    if (daysUntil >= 0 && daysUntil <= 14) {
+      score += 8;
+      reasons.push('Happening soon');
+    }
+
+    if (score === 0) {
+      score = 8;
+      reasons.push('New event you have not joined yet');
+    }
+
+    return {
+      event,
+      score,
+      reason: reasons[0] || 'Recommended for you',
+    };
+  });
+
+  return scored
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+};
+
 module.exports = {
   generateHumanDescription,
   improveEventDraft,
+  recommendEventsForUser,
 };
