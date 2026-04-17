@@ -5,7 +5,7 @@
   bottom: 0;
   width: 100%;
   pointer-events: none;
-  z-index: 999;
+  z-index: 1300;
 }
 
 .detail-panel {
@@ -48,8 +48,8 @@
 }
 
 .detail-close {
-  background: none;
-  border: none;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
   font-size: 1.5rem;
   cursor: pointer;
   color: #6b7280;
@@ -65,7 +65,7 @@
 }
 
 .detail-close:hover {
-  background-color: #e5e7eb;
+  background-color: #f3f4f6;
   color: #111827;
 }
 

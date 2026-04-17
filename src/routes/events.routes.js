@@ -5,6 +5,7 @@ const {
   getRecommendedEvents,
   joinEvent,
   leaveEvent,
+  deleteEvent,
   postMessage,
   getMessages,
   improveEventDraft,
@@ -30,6 +31,9 @@ router.post('/:eventId/join', verifyToken, joinEvent);
 
 // DELETE /api/events/:eventId/leave - Leave an event (protected)
 router.delete('/:eventId/leave', verifyToken, leaveEvent);
+
+// DELETE /api/events/:eventId - Delete event (creator/admin, protected)
+router.delete('/:eventId', verifyToken, deleteEvent);
 
 // POST /api/events/:eventId/messages - Post a message (protected)
 router.post('/:eventId/messages', verifyToken, postMessage);

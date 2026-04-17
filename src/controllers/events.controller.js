@@ -491,6 +491,54 @@ exports.leaveEvent = async (req, res) => {
 };
 
 /**
+ * Delete an event (creator or admin)
+ * DELETE /api/events/:eventId
+ */
+exports.deleteEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const userEmail = String(req.userEmail || '').toLowerCase();
+    const isAdmin = req.userRole === 'admin';
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found',
+      });
+    }
+
+    const isCreator = String(event.createdByEmail || '').toLowerCase() === userEmail;
+    if (!isCreator && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only the event creator or admin can delete this event',
+      });
+    }
+
+    await Message.deleteMany({ eventId: event._id });
+    await Event.deleteOne({ _id: event._id });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`event:${eventId}`).emit('event:deleted', { eventId });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Event deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting event:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error deleting event',
+      error: error.message,
+    });
+  }
+};
+
+/**
  * Post a message in event chat (protected route)
  * POST /api/events/:eventId/messages
  * Body: { text: string, userName: string }

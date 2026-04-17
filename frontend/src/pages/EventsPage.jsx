@@ -22,6 +22,7 @@ export default function EventsPage() {
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [mobileView, setMobileView] = useState('map');
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Fetch events on page load
   useEffect(() => {
@@ -56,6 +57,18 @@ export default function EventsPage() {
     window.addEventListener('nomad:place-selected', handlePlaceSelected);
     return () => window.removeEventListener('nomad:place-selected', handlePlaceSelected);
   }, []);
+
+  useEffect(() => {
+    if (!successMessage) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      setSuccessMessage('');
+    }, 2500);
+
+    return () => window.clearTimeout(timer);
+  }, [successMessage]);
 
   const fetchEvents = async () => {
     setLoadingEvents(true);
@@ -113,6 +126,12 @@ export default function EventsPage() {
 
   return (
     <div className={`events-page ${isMobile && mobileView === 'map' ? 'mobile-map-mode' : ''}`}>
+      {successMessage && (
+        <div className="events-success-banner" role="status" aria-live="polite">
+          {successMessage}
+        </div>
+      )}
+
       {/* Header */}
       <div className="events-header">
         <div className="header-content">
@@ -204,6 +223,7 @@ export default function EventsPage() {
           setEvents((prevEvents) => prevEvents.filter((e) => e._id !== deletedEventId));
           setSelectedEvent(null);
           setDetailsPanelOpen(false);
+          setSuccessMessage('Deleted Sucessfully');
         }}
       />
     </div>

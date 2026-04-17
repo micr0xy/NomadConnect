@@ -14,6 +14,21 @@
   overflow: hidden;
 }
 
+.events-success-banner {
+  position: fixed;
+  top: 16px;
+  right: 24px;
+  z-index: 1600;
+  background: #166534;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  box-shadow: 0 10px 22px rgba(22, 101, 52, 0.3);
+}
+
 /* ── Warm natural header ── */
 .events-header {
   position: relative;
@@ -174,6 +189,13 @@
 }
 
 @media (max-width: 480px) {
+  .events-success-banner {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    text-align: center;
+  }
+
   .events-header {
     padding: 62px 12px 10px;
   }
