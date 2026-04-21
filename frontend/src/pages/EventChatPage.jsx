@@ -30,7 +30,6 @@ export default function EventChatPage() {
   const [error, setError] = useState('');
   const [showParticipants, setShowParticipants] = useState(false);
 
-  // Fetch event details
   useEffect(() => {
     const fetchEventDetails = async () => {
       try {
@@ -44,7 +43,6 @@ export default function EventChatPage() {
         }
         setEvent(foundEvent);
 
-        // Check if user is participant
         const normalizedUserEmail = (userEmail || '').toLowerCase();
         const isUserParticipant = foundEvent.participants?.some(
           (p) => (p.userEmail || p.email || '').toLowerCase() === normalizedUserEmail
@@ -63,7 +61,6 @@ export default function EventChatPage() {
     fetchEventDetails();
   }, [eventId, userEmail]);
 
-  // Initial message load
   useEffect(() => {
     if (!eventId || !isParticipant) return;
 
@@ -79,7 +76,6 @@ export default function EventChatPage() {
     fetchMessages();
   }, [eventId, isParticipant]);
 
-  // Realtime chat via Socket.IO
   useEffect(() => {
     if (!eventId || !isParticipant) return;
 
@@ -212,7 +208,6 @@ export default function EventChatPage() {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Header */}
       <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 bg-white border-b border-gray-200 shadow-sm flex-shrink-0 gap-2 flex-wrap">
         <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
           <motion.button
@@ -253,7 +248,6 @@ export default function EventChatPage() {
         )}
       </div>
 
-      {/* Error Banner */}
       {error && (
         <motion.div
           className="flex items-center justify-between px-3 sm:px-6 py-3 bg-red-50 border-b border-red-200"
@@ -271,9 +265,7 @@ export default function EventChatPage() {
         </motion.div>
       )}
 
-      {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Chat Section */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {!isParticipant ? (
             <motion.div
@@ -315,7 +307,6 @@ export default function EventChatPage() {
           )}
         </div>
 
-        {/* Participants Sidebar */}
         {showParticipants && (
           <>
             <div

@@ -27,14 +27,12 @@ function AppContent() {
   const isHydrated = useAuthStore((state) => state.isHydrated)
   const hasCheckedAuth = useAuthStore((state) => state.hasCheckedAuth)
 
-  // Check if user is authenticated on app load
   useEffect(() => {
     if (isHydrated && !hasCheckedAuth) {
       checkAuth()
     }
   }, [checkAuth, isHydrated, hasCheckedAuth])
 
-  // Determine if current route is protected
   const protectedRoutes = ['/events', '/dashboard', '/profile', '/admin', '/messages', '/change-password']
   const isProtectedRoute = protectedRoutes.some(route => 
     location.pathname === route || location.pathname.startsWith(route + '/')

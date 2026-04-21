@@ -9,9 +9,6 @@ const {
 } = require('../controllers/notification.controller');
 const { verifyToken, verifyAdmin } = require('../middleware/auth.middleware');
 
-/**
- * Protected Routes
- */
 router.get('/', verifyToken, getNotifications);
 router.patch('/:notificationId/read', verifyToken, markAsRead);
 router.patch('/read-all', verifyToken, markAllAsRead);

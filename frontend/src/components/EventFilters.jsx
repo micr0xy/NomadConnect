@@ -18,11 +18,10 @@ const EventFilters = ({ events, onFilterChange }) => {
     { id: 'other', label: 'Other' },
   ];
 
-  // Filter logic
   const applyFilters = useCallback(() => {
     let filtered = [...events];
 
-    // Search filter
+    /* searching events by category */
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
@@ -32,7 +31,6 @@ const EventFilters = ({ events, onFilterChange }) => {
       );
     }
 
-    // Category filter
     if (selectedCategories.length > 0) {
       filtered = filtered.filter((event) =>
         selectedCategories.includes(event.category || 'other')
@@ -42,7 +40,6 @@ const EventFilters = ({ events, onFilterChange }) => {
     onFilterChange(filtered);
   }, [searchTerm, selectedCategories, events, onFilterChange]);
 
-  // Call filter when search or categories change
   React.useEffect(() => {
     applyFilters();
   }, [searchTerm, selectedCategories, applyFilters]);
@@ -65,7 +62,6 @@ const EventFilters = ({ events, onFilterChange }) => {
 
   return (
     <div className="event-filters-container">
-      {/* Search bar */}
       <div className="search-bar-wrapper">
         <div className="search-bar">
           <MdSearch size={18} className="search-icon" />
@@ -89,7 +85,6 @@ const EventFilters = ({ events, onFilterChange }) => {
         </div>
       </div>
 
-      {/* Filter toggle button */}
       <motion.button
         className={`filter-toggle ${isExpanded ? 'expanded' : ''} ${hasActiveFilters ? 'active' : ''}`}
         onClick={() => setIsExpanded(!isExpanded)}
@@ -101,7 +96,6 @@ const EventFilters = ({ events, onFilterChange }) => {
         {hasActiveFilters && <span className="filter-badge">{searchTerm || selectedCategories.length}</span>}
       </motion.button>
 
-      {/* Filter panel */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -131,7 +125,6 @@ const EventFilters = ({ events, onFilterChange }) => {
               </div>
             </div>
 
-            {/* Clear filters button */}
             {hasActiveFilters && (
               <motion.button
                 className="clear-filters-button"

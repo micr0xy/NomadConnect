@@ -31,7 +31,6 @@ const messageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Index for fast queries by eventId
 messageSchema.index({ eventId: 1, createdAt: 1 });
 
 module.exports = mongoose.model('Message', messageSchema);

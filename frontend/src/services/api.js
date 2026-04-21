@@ -1,18 +1,20 @@
 import axios from 'axios';
 
+/* Detect dev environment */
 const isDev = import.meta.env.DEV;
 const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 const API_BASE_URL = configuredApiBaseUrl || (isDev ? 'http://localhost:5000' : '');
 
+/* Create axios instance */
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // Important: send cookies with every request
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor - add token to headers if available
+/* Add token from auth store */
 api.interceptors.request.use(
   (config) => {
     if (!API_BASE_URL && !isDev) {
@@ -31,7 +33,6 @@ api.interceptors.request.use(
         }
       }
     } catch (error) {
-      // Ignore localStorage parse issues and continue with cookie auth.
     }
 
     return config;
@@ -41,7 +42,6 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - handle errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -50,8 +50,6 @@ api.interceptors.response.use(
     }
 
     if (error.response?.status === 401) {
-      // Token expired or invalid - clear auth state
-      // This will be handled by the useAuthStore
       console.log('Unauthorized - Token may have expired');
     }
     return Promise.reject(error);

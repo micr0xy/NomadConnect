@@ -42,7 +42,6 @@ const privateChatGroupSchema = new mongoose.Schema(
   }
 );
 
-// Index for fast queries
 privateChatGroupSchema.index({ participants: 1 });
 privateChatGroupSchema.index({ createdBy: 1 });
 

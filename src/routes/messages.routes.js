@@ -9,9 +9,6 @@ const {
 } = require('../controllers/messages.controller');
 const { verifyToken } = require('../middleware/auth.middleware');
 
-/**
- * Protected Routes
- */
 router.post('/groups/:userId', verifyToken, getOrCreatePrivateGroup);
 router.get('/groups', verifyToken, getUserGroups);
 router.get('/groups/:groupId/messages', verifyToken, getGroupMessages);

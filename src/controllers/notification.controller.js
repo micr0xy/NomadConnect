@@ -11,8 +11,9 @@ exports.getNotifications = async (req, res) => {
     const userId = req.userId;
     const { limit = 20, skip = 0 } = req.query;
 
-    const currentUser = await User.findById(userId).select('following').lean();
+    const currentUser = await User.findById(userId).select('following followers').lean();
     const followingSet = new Set((currentUser?.following || []).map((id) => String(id)));
+    const followersSet = new Set((currentUser?.followers || []).map((id) => String(id)));
 
     const notifications = await Notification.find({ recipientId: userId })
       .populate('senderId', 'firstName lastName profileImage email')
@@ -27,6 +28,7 @@ exports.getNotifications = async (req, res) => {
       return {
         ...serialized,
         isFollowingSender: followingSet.has(String(senderId || '')),
+        isFollowedBySender: followersSet.has(String(senderId || '')),
       };
     });
 

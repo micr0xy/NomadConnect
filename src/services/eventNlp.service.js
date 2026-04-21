@@ -1,8 +1,9 @@
-// Human-like event description generator with natural language patterns
 const natural = require('natural');
 
+/* Initialize tokenizer */
 const tokenizer = new natural.WordTokenizer();
 
+/* Filter out common words */
 const STOP_WORDS = new Set([
   'this', 'that', 'with', 'from', 'have', 'your', 'about', 'there', 'where', 'when', 'what',
   'will', 'would', 'could', 'should', 'into', 'onto', 'over', 'under', 'than', 'then', 'them',
@@ -11,6 +12,7 @@ const STOP_WORDS = new Set([
   'are', 'was', 'were', 'been', 'to', 'of', 'in', 'on', 'at', 'is', 'it', 'a', 'an', 'or', 'as',
 ]);
 
+/* Map keywords to event categories */
 const CATEGORY_HINTS = {
   meetup: ['network', 'social', 'friends', 'community', 'hangout', 'meetup'],
   travel: ['trip', 'travel', 'explore', 'journey', 'backpacking', 'tour'],
@@ -163,20 +165,18 @@ const generateHumanDescription = ({
   date = '',
   time = '',
 } = {}) => {
+  /* Use custom description if provided */
   const categoryKey = String(category || 'other').toLowerCase();
   
-  // Use existing description if good enough
   if (description && description.trim().length >= 50) {
     return description.trim();
   }
 
-  // Build natural description from scratch
   const intro = getRandomItem(CATEGORY_INTROS[categoryKey] || CATEGORY_INTROS.other);
   const vibe = getRandomItem(CATEGORY_VIBES[categoryKey] || CATEGORY_VIBES.other);
   const closing = getRandomItem(CLOSINGS);
   const capacityLine = getCapacityVibe(maxParticipants);
 
-  // Build timeline info naturally
   let timelineInfo = '';
   if (date && time) {
     timelineInfo = `We're meeting on ${date} at ${time}. `;
@@ -184,19 +184,16 @@ const generateHumanDescription = ({
     timelineInfo = `Mark your calendar for ${date}. `;
   }
 
-  // Optional: mention title keywords if title is descriptive
   let titleContext = '';
   if (title && title.length > 5) {
     titleContext = ` This is all about ${title.toLowerCase()}. `;
   }
 
-  // Capacity context
   let capacityContext = '';
   if (capacityLine) {
     capacityContext = ` We're ${capacityLine}, so you'll really get to know everyone. `;
   }
 
-  // Combine into natural paragraph
   const fullDescription = `${intro}${titleContext} The vibe is ${vibe}. ${timelineInfo}${capacityContext}${closing}`;
 
   return fullDescription.replace(/\s+/g, ' ').trim();
@@ -226,6 +223,7 @@ const improveEventDraft = ({
   };
 };
 
+/* Extract and stem tokens */
 const normalizeTokens = (text = '') => {
   return tokenizer
     .tokenize(String(text || '').toLowerCase())
@@ -233,6 +231,7 @@ const normalizeTokens = (text = '') => {
     .filter((word) => word.length >= 3 && !STOP_WORDS.has(word));
 };
 
+/* Score event categories from preferences */
 const buildJoinedCategoryWeights = (joinedEvents = []) => {
   const categoryCounts = joinedEvents.reduce((acc, event) => {
     const category = String(event.category || 'other').toLowerCase();
@@ -249,6 +248,7 @@ const buildJoinedCategoryWeights = (joinedEvents = []) => {
   return weights;
 };
 
+/* Extract keywords from user joined events */
 const collectJoinedKeywords = (joinedEvents = []) => {
   const frequency = {};
 
@@ -267,6 +267,7 @@ const collectJoinedKeywords = (joinedEvents = []) => {
   );
 };
 
+/* Get user interest tokens */
 const collectInterestTokens = (userProfile = {}) => {
   const parts = [
     ...(userProfile.interests || []),
@@ -289,6 +290,7 @@ const scoreCategoryFromInterests = (interestTokens, category) => {
   return Math.min(24, hintMatches * 8);
 };
 
+/* Score and recommend events */
 const recommendEventsForUser = ({
   events = [],
   userProfile = {},

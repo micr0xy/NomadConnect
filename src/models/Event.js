@@ -25,8 +25,6 @@ const eventSchema = new mongoose.Schema(
       required: [true, 'Event start time is required'],
       validate: {
         validator: function (value) {
-          // Only enforce future-date check when startTime is created/edited,
-          // not when unrelated fields (e.g., participants) are updated.
           if (!this.isModified('startTime')) {
             return true;
           }
@@ -42,7 +40,7 @@ const eventSchema = new mongoose.Schema(
         default: 'Point',
       },
       coordinates: {
-        type: [Number], // [longitude, latitude]
+        type: [Number],
         required: [true, 'Event location is required'],
         validate: {
           validator: function (value) {
@@ -92,7 +90,6 @@ const eventSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Create 2dsphere index for geospatial queries
 eventSchema.index({ location: '2dsphere' });
 
 module.exports = mongoose.model('Event', eventSchema);

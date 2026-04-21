@@ -36,7 +36,6 @@ const CreateEventModal = ({ isOpen, onClose, selectedPosition, onEventCreated })
       ...prev,
       [name]: value,
     }));
-    // Clear error for this field when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -101,7 +100,6 @@ const CreateEventModal = ({ isOpen, onClose, selectedPosition, onEventCreated })
       newErrors.time = 'Time is required';
     }
 
-    // Combined date + time validation
     if (formData.date && formData.time) {
       const startDateTime = new Date(`${formData.date}T${formData.time}`);
       const now = new Date();
@@ -134,7 +132,6 @@ const CreateEventModal = ({ isOpen, onClose, selectedPosition, onEventCreated })
     setLoading(true);
 
     try {
-      // Combine date + time into ISO string
       const startDateTime = new Date(`${formData.date}T${formData.time}`);
       const startTimeISO = startDateTime.toISOString();
 
@@ -153,7 +150,6 @@ const CreateEventModal = ({ isOpen, onClose, selectedPosition, onEventCreated })
 
       const createdEvent = await createEvent(eventData);
 
-      // Reset form
       setFormData({
         title: '',
         description: '',
@@ -164,7 +160,6 @@ const CreateEventModal = ({ isOpen, onClose, selectedPosition, onEventCreated })
       });
       setNlpSuggestions([]);
 
-      // Notify parent
       if (onEventCreated) {
         onEventCreated(createdEvent);
       }

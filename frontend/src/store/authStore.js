@@ -17,7 +17,6 @@ const useAuthStore = create(
       isHydrated: false,
       hasCheckedAuth: false,
 
-      // Sign up with email
       signup: async (firstName, lastName, email, password, confirmPassword) => {
         set({ isLoading: true, error: null });
         try {
@@ -45,7 +44,6 @@ const useAuthStore = create(
         }
       },
 
-      // Login with email
       login: async (email, password) => {
         set({ isLoading: true, error: null });
         try {
@@ -70,7 +68,6 @@ const useAuthStore = create(
         }
       },
 
-      // Admin login with elevated credentials
       adminLogin: async (email, password) => {
         set({ isLoading: true, error: null });
         try {
@@ -95,7 +92,6 @@ const useAuthStore = create(
         }
       },
 
-      // Google OAuth
       googleAuth: async (googleId, email, firstName, lastName, picture) => {
         set({ isLoading: true, error: null });
         try {
@@ -122,7 +118,6 @@ const useAuthStore = create(
         }
       },
 
-      // Check authentication status
       checkAuth: async () => {
         const authAlreadyResolved = get().hasCheckedAuth;
         if (authAlreadyResolved && get().isAuthenticated) {
@@ -143,7 +138,6 @@ const useAuthStore = create(
 
           return response.data;
         } catch (error) {
-          // If login/signup completed while this request was in flight, don't override it.
           if (get().isAuthenticated) {
             set({ hasCheckedAuth: true, isLoading: false });
             return null;
@@ -166,7 +160,6 @@ const useAuthStore = create(
         }
       },
 
-      // Update profile in backend and local store
       updateProfile: async (profileData) => {
         set({ isLoading: true, error: null });
         try {
@@ -185,7 +178,6 @@ const useAuthStore = create(
         }
       },
 
-      // Logout
       logout: async () => {
         set({ isLoading: true, error: null });
         try {
@@ -205,13 +197,10 @@ const useAuthStore = create(
         }
       },
 
-      // Clear error
       clearError: () => set({ error: null }),
 
-      // Set user
       setUser: (user) => set({ user }),
 
-      // Persist hydration marker
       setHydrated: (isHydrated) => set({ isHydrated }),
     }),
     {

@@ -51,7 +51,6 @@ const EventCard = ({ event, onSelect, isSelected = false }) => {
         }
       }}
     >
-      {/* Header with title and category */}
       <div className="event-card-header">
         <div className="event-card-title-section">
           <h3 className="event-card-title">{event.title}</h3>
@@ -65,7 +64,6 @@ const EventCard = ({ event, onSelect, isSelected = false }) => {
         )}
       </div>
 
-      {/* Description */}
       {event.description && (
         <p className="event-card-description">
           {event.description.substring(0, 80)}
@@ -73,7 +71,6 @@ const EventCard = ({ event, onSelect, isSelected = false }) => {
         </p>
       )}
 
-      {/* Meta information */}
       <div className="event-card-meta">
         <div className="event-card-meta-item">
           <MdAccessTime size={14} />
@@ -91,7 +88,6 @@ const EventCard = ({ event, onSelect, isSelected = false }) => {
         )}
       </div>
 
-      {/* Status indicator */}
       {event.status && (
         <div className={`event-status ${event.status}`}>
           {event.status.charAt(0).toUpperCase() + event.status.slice(1)}

@@ -11,7 +11,6 @@ const EventList = ({ events, onSelectEvent, loading }) => {
   const [filteredEvents, setFilteredEvents] = useState(events || []);
   const [selectedEventId, setSelectedEventId] = useState(null);
 
-  // Update filtered events when events change
   React.useEffect(() => {
     setFilteredEvents(events || []);
   }, [events]);
@@ -25,7 +24,6 @@ const EventList = ({ events, onSelectEvent, loading }) => {
     setFilteredEvents(filters);
   }, []);
 
-  // Loading state
   if (loading) {
     return (
       <div className="event-list-container">
@@ -40,7 +38,6 @@ const EventList = ({ events, onSelectEvent, loading }) => {
     );
   }
 
-  // Empty state
   if (!events || events.length === 0) {
     return (
       <div className="event-list-container">
@@ -66,10 +63,8 @@ const EventList = ({ events, onSelectEvent, loading }) => {
         <p>{filteredEvents.length} results</p>
       </div>
 
-      {/* Filters */}
       <EventFilters events={events} onFilterChange={handleFilterChange} />
 
-      {/* Events list or empty state */}
       <div className="event-list-content">
         {filteredEvents.length === 0 ? (
           <EmptyState

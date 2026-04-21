@@ -12,7 +12,7 @@ export default function EventsPage() {
   const userAvatar = user?.profileImage || '';
   const userInitials = user ? `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}` : '?';
 
-  // State management
+  /* Initialize state */
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -24,7 +24,6 @@ export default function EventsPage() {
   const [mobileView, setMobileView] = useState('map');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Fetch events on page load
   useEffect(() => {
     fetchEvents();
   }, []);
@@ -77,49 +76,41 @@ export default function EventsPage() {
       setEvents(fetchedEvents);
     } catch (error) {
       console.error('Error fetching events:', error);
-      // User-friendly error handling - events will be empty
     } finally {
       setLoadingEvents(false);
     }
   };
 
-  // Convert events to map markers format
   const mapMarkers = events.map((event) => ({
     id: event._id,
-    position: [event.location.coordinates[1], event.location.coordinates[0]], // [lat, lng]
+    position: [event.location.coordinates[1], event.location.coordinates[0]],
     title: event.title,
     description: event.description,
     popup: true,
-    event, // Store full event object
+    event,
   }));
 
-  // Handle map click
   const openCreateModalAtLocation = (location) => {
     setSelectedPosition(location);
     setMapCenter([location.lat, location.lng]);
     setModalOpen(true);
   };
 
-  // Handle map click
   const handleMapClick = (latlng) => {
     openCreateModalAtLocation(latlng);
   };
 
-  // Handle event created
   const handleEventCreated = (newEvent) => {
     setEvents((prevEvents) => [...prevEvents, newEvent]);
     setSelectedPosition(null);
-    // Optional: show success message
     console.log('Event created:', newEvent);
   };
 
-  // Handle event selected
   const handleSelectEvent = (event) => {
     setSelectedEvent(event);
     setDetailsPanelOpen(true);
   };
 
-  // Handle marker click
   const handleMarkerClick = (event) => {
     handleSelectEvent(event);
   };
@@ -132,7 +123,6 @@ export default function EventsPage() {
         </div>
       )}
 
-      {/* Header */}
       <div className="events-header">
         <div className="header-content">
           <span className="header-kicker">Discover</span>
@@ -164,7 +154,6 @@ export default function EventsPage() {
         </div>
       </div>
 
-      {/* Main container */}
       <div className="events-container">
         {(!isMobile || mobileView === 'map') && (
           <div className="map-section">
@@ -183,7 +172,6 @@ export default function EventsPage() {
           </div>
         )}
 
-        {/* Side panel: Event list + details */}
         {(!isMobile || mobileView === 'list') && (
           <div className="side-panel">
             <EventList
@@ -195,7 +183,6 @@ export default function EventsPage() {
         )}
       </div>
 
-      {/* Modal for creating events */}
       <CreateEventModal
         isOpen={modalOpen}
         onClose={() => {
@@ -206,17 +193,14 @@ export default function EventsPage() {
         onEventCreated={handleEventCreated}
       />
 
-      {/* Side panel for event details */}
       <EventDetailPanel
         isOpen={detailsPanelOpen}
         onClose={() => setDetailsPanelOpen(false)}
         event={selectedEvent}
         onEventUpdated={(updatedEvent) => {
-          // Update the event in the list
           setEvents((prevEvents) =>
             prevEvents.map((e) => (e._id === updatedEvent._id ? updatedEvent : e))
           );
-          // Update selected event
           setSelectedEvent(updatedEvent);
         }}
         onEventDeleted={(deletedEventId) => {

@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const { createFollowNotification, createFollowBackNotification } = require('./notification.controller');
 const { sendForgotPasswordEmail } = require('../services/email.service');
 
-// Helper function to generate JWT token
+/* Create JWT token with user data */
 const generateToken = (userId, userEmail) => {
   return jwt.sign(
     { id: userId, email: userEmail },
@@ -13,7 +13,7 @@ const generateToken = (userId, userEmail) => {
   );
 };
 
-// Helper function to set token in cookies
+/* Set secure token cookie */
 const setTokenCookie = (res, token) => {
   const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
   const isProduction = process.env.NODE_ENV === 'production';
@@ -25,10 +25,30 @@ const setTokenCookie = (res, token) => {
   });
 };
 
-/**
- * SIGNUP - Register a new user
- * POST /api/auth/signup
- */
+/* Decode Google credential (JWT) payload without external dependency */
+const decodeGoogleCredentialPayload = (credential) => {
+  if (!credential || typeof credential !== 'string') {
+    return null;
+  }
+
+  const parts = credential.split('.');
+  if (parts.length < 2) {
+    return null;
+  }
+
+  try {
+    const base64 = parts[1]
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+    const payload = Buffer.from(padded, 'base64').toString('utf8');
+    return JSON.parse(payload);
+  } catch (_) {
+    return null;
+  }
+};
+
+/* Register new user with email */
 exports.signup = async (req, res) => {
   try {
     const firstName = String(req.body.firstName || '').trim();
@@ -37,7 +57,7 @@ exports.signup = async (req, res) => {
     const password = String(req.body.password || '');
     const confirmPassword = String(req.body.confirmPassword || '');
 
-    // Validation
+    /* Check all required fields provided */
     if (!firstName || !lastName || !email || !password || !confirmPassword) {
       return res.status(400).json({
         success: false,
@@ -45,6 +65,7 @@ exports.signup = async (req, res) => {
       });
     }
 
+    /* Verify passwords match */
     if (password !== confirmPassword) {
       return res.status(400).json({
         success: false,
@@ -52,6 +73,7 @@ exports.signup = async (req, res) => {
       });
     }
 
+    /* Enforce minimum password length */
     if (password.length < 8) {
       return res.status(400).json({
         success: false,
@@ -59,7 +81,7 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // Check if user already exists
+    /* Check duplicate email */
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({
@@ -68,7 +90,7 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // Create new user
+    /* Insert new user to database */
     const user = await User.create({
       firstName,
       lastName,
@@ -121,16 +143,13 @@ exports.signup = async (req, res) => {
   }
 };
 
-/**
- * LOGIN - Authenticate user and set token
- * POST /api/auth/login
- */
+/* Authenticate user and set token */
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const normalizedEmail = String(email || '').toLowerCase();
 
-    // Validation
+    /* Require email and password */
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -138,7 +157,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Find user (include password field for comparison)
+    /* Get admin email from environment */
     const adminEmail = (process.env.ADMIN_EMAIL || 'admin@nomadconnect.com').toLowerCase();
     const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@12345';
 
@@ -172,9 +191,10 @@ exports.login = async (req, res) => {
       });
     }
 
+    /* Check if admin env login */
     const isEnvAdminLogin = normalizedEmail === adminEmail && password === adminPassword;
 
-    // Check password (or allow env admin credential override)
+    /* Verify password or allow admin override */
     const passwordMatches = isEnvAdminLogin ? true : await user.matchPassword(password);
     if (!passwordMatches) {
       return res.status(401).json({
@@ -189,13 +209,13 @@ exports.login = async (req, res) => {
       await user.save();
     }
 
-    // Generate JWT token
+    /* Generate JWT token */
     const token = generateToken(user._id, user.email);
 
-    // Set token in cookie
+    /* Set token in cookie */
     setTokenCookie(res, token);
 
-    // Return user data without password
+    /* Return user data without password */
     const userWithoutPassword = user.toJSON();
 
     res.json({
@@ -214,14 +234,12 @@ exports.login = async (req, res) => {
   }
 };
 
-/**
- * FORGOT PASSWORD - Generate a temporary password and send it via email
- * POST /api/auth/forgot-password
- */
+/* Generate temporary password via email */
 exports.forgotPassword = async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
 
+    /* Require email address */
     if (!email) {
       return res.status(400).json({
         success: false,
@@ -229,6 +247,8 @@ exports.forgotPassword = async (req, res) => {
       });
     }
 
+    /* Validate email format */
+    /* Validate email format */
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({
@@ -239,7 +259,6 @@ exports.forgotPassword = async (req, res) => {
 
     const user = await User.findOne({ email });
 
-    // Avoid revealing whether an email exists in the system.
     if (!user) {
       return res.status(200).json({
         success: true,
@@ -247,6 +266,8 @@ exports.forgotPassword = async (req, res) => {
       });
     }
 
+    /* Generate random temp password */
+    /* Generate random temp password */
     const temporaryPassword = crypto
       .randomBytes(9)
       .toString('base64')
@@ -277,10 +298,7 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-/**
- * CHANGE PASSWORD - Update the current user's password after verifying the old one
- * PUT /api/auth/change-password
- */
+/* Update user password with verification */
 exports.changePassword = async (req, res) => {
   try {
     const userId = req.userId;
@@ -288,13 +306,15 @@ exports.changePassword = async (req, res) => {
     const newPassword = String(req.body.newPassword || '');
     const confirmPassword = String(req.body.confirmPassword || '');
 
-    if (!currentPassword || !newPassword || !confirmPassword) {
+    /* Require new password fields */
+    if (!newPassword || !confirmPassword) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide current password, new password, and confirm password',
+        message: 'Please provide new password and confirm password',
       });
     }
 
+    /* Check new password length */
     if (newPassword.length < 8) {
       return res.status(400).json({
         success: false,
@@ -302,6 +322,7 @@ exports.changePassword = async (req, res) => {
       });
     }
 
+    /* Verify new passwords match */
     if (newPassword !== confirmPassword) {
       return res.status(400).json({
         success: false,
@@ -317,27 +338,36 @@ exports.changePassword = async (req, res) => {
       });
     }
 
-    if (user.authProvider !== 'email' || !user.passwordHash) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password change is only available for email accounts',
-      });
+    const hasExistingPassword = Boolean(user.passwordHash);
+
+    if (hasExistingPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({
+          success: false,
+          message: 'Current password is required',
+        });
+      }
+
+      /* Verify current password correct */
+      const passwordMatches = await user.matchPassword(currentPassword);
+      if (!passwordMatches) {
+        return res.status(401).json({
+          success: false,
+          message: 'Current password is incorrect',
+        });
+      }
     }
 
-    const passwordMatches = await user.matchPassword(currentPassword);
-    if (!passwordMatches) {
-      return res.status(401).json({
-        success: false,
-        message: 'Current password is incorrect',
-      });
-    }
-
+    /* Update with new password */
     user.passwordHash = newPassword;
+    if (user.authProvider !== 'email') {
+      user.authProvider = 'email';
+    }
     await user.save();
 
     return res.json({
       success: true,
-      message: 'Password updated successfully',
+      message: hasExistingPassword ? 'Password updated successfully' : 'Password set successfully',
     });
   } catch (error) {
     console.error('Change password error:', error);
@@ -349,14 +379,12 @@ exports.changePassword = async (req, res) => {
   }
 };
 
-/**
- * ADMIN LOGIN - Authenticate admin via credentials from env
- * POST /api/auth/admin/login
- */
+/* Login with admin credentials */
 exports.adminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    /* Require both email password */
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -367,6 +395,7 @@ exports.adminLogin = async (req, res) => {
     const adminEmail = (process.env.ADMIN_EMAIL || 'admin@nomadconnect.com').toLowerCase();
     const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@12345';
 
+    /* Validate admin credentials */
     if (email.toLowerCase() !== adminEmail || password !== adminPassword) {
       return res.status(401).json({
         success: false,
@@ -375,6 +404,7 @@ exports.adminLogin = async (req, res) => {
     }
 
     let user = await User.findOne({ email: adminEmail });
+    /* Create admin if not exists */
     if (!user) {
       user = await User.create({
         firstName: 'Admin',
@@ -391,6 +421,7 @@ exports.adminLogin = async (req, res) => {
     }
 
     const token = generateToken(user._id, user.email);
+    /* Set auth token */
     setTokenCookie(res, token);
 
     return res.json({
@@ -409,14 +440,12 @@ exports.adminLogin = async (req, res) => {
   }
 };
 
-/**
- * LOGOUT - Clear token from cookies
- * POST /api/auth/logout
- */
+/* Clear user authentication token */
+/* Clear user authentication token */
 exports.logout = (req, res) => {
   try {
     const isProduction = process.env.NODE_ENV === 'production';
-    // Clear the token cookie
+    /* Remove token from browser */
     res.clearCookie('token', {
       httpOnly: true,
       secure: isProduction,
@@ -437,16 +466,12 @@ exports.logout = (req, res) => {
   }
 };
 
-/**
- * CHECKAUTH - Verify token and return user data
- * GET /api/auth/checkauth
- * Protected route - requires valid token in cookies
- */
+/* Verify user token validity */
 exports.checkauth = async (req, res) => {
   try {
-    // req.userId is set by verifyToken middleware
     const user = await User.findById(req.userId);
 
+    /* Return user if found */
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -469,15 +494,12 @@ exports.checkauth = async (req, res) => {
   }
 };
 
-/**
- * GET PUBLIC PROFILE BY EMAIL - Return safe profile fields for profile visit pages
- * GET /api/auth/profile/by-email/:email
- * Protected route - requires valid token
- */
+/* Fetch public user profile */
 exports.getPublicProfileByEmail = async (req, res) => {
   try {
     const profileEmail = decodeURIComponent(String(req.params.email || '')).toLowerCase().trim();
 
+    /* Check email parameter exists */
     if (!profileEmail) {
       return res.status(400).json({
         success: false,
@@ -493,6 +515,8 @@ exports.getPublicProfileByEmail = async (req, res) => {
       });
     }
 
+    /* Build public profile object */
+    /* Build public profile object */
     const publicProfile = {
       _id: user._id,
       email: user.email,
@@ -531,52 +555,88 @@ exports.getPublicProfileByEmail = async (req, res) => {
   }
 };
 
-/**
- * GOOGLE AUTH - Handle Google OAuth signup/login
- * POST /api/auth/google
- */
+/* Handle Google OAuth authentication */
 exports.googleAuth = async (req, res) => {
   try {
-    const { googleId, email, firstName, lastName, picture } = req.body;
+    let { googleId, email, firstName, lastName, picture, credential } = req.body;
 
-    // Validation
-    if (!googleId || !email) {
+    if ((!googleId || !email) && credential) {
+      const decoded = decodeGoogleCredentialPayload(credential);
+      if (decoded) {
+        googleId = googleId || decoded.sub;
+        email = email || decoded.email;
+        firstName = firstName || decoded.given_name || decoded.name || '';
+        lastName = lastName || decoded.family_name || '';
+        picture = picture || decoded.picture || null;
+      }
+    }
+
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const normalizedGoogleId = String(googleId || '').trim();
+
+    /* Require Google ID and email */
+    if (!normalizedGoogleId || !normalizedEmail) {
       return res.status(400).json({
         success: false,
         message: 'Missing Google credentials',
       });
     }
 
-    // Check if user exists
-    let user = await User.findOne({ email });
+    /* Find existing user by email or googleId */
+    const lookupConditions = [{ email: normalizedEmail }, { googleId: normalizedGoogleId }];
+    let user = await User.findOne({ $or: lookupConditions });
 
-    if (user) {
-      // User exists - update googleId if not already set
-      if (!user.googleId) {
-        user.googleId = googleId;
-        user.authProvider = 'google';
-        await user.save();
-      }
-    } else {
-      // Create new user with Google OAuth
-      user = await User.create({
-        firstName: firstName || email.split('@')[0],
-        lastName: lastName || '',
-        email,
-        googleId,
-        authProvider: 'google',
-        profileImage: picture || null,
-        // No password hash for Google OAuth users
+    if (user?.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is blocked by admin',
       });
     }
 
-    // Generate JWT token
+    /* Link Google ID to existing */
+    if (user) {
+      let shouldSave = false;
+
+      if (user.email !== normalizedEmail) {
+        user.email = normalizedEmail;
+        shouldSave = true;
+      }
+
+      if (!user.googleId) {
+        user.googleId = normalizedGoogleId;
+        shouldSave = true;
+      }
+
+      if (user.authProvider !== 'google') {
+        user.authProvider = 'google';
+        shouldSave = true;
+      }
+
+      if (!user.profileImage && picture) {
+        user.profileImage = picture;
+        shouldSave = true;
+      }
+
+      if (shouldSave) {
+        await user.save();
+      }
+    /* Create new user from Google */
+    } else {
+      /* Create new user from Google */
+      user = await User.create({
+        firstName: firstName || normalizedEmail.split('@')[0],
+        lastName: lastName || '',
+        email: normalizedEmail,
+        googleId: normalizedGoogleId,
+        authProvider: 'google',
+        profileImage: picture || null,
+      });
+    }
+
     const token = generateToken(user._id, user.email);
 
-    // Set token in cookie
     setTokenCookie(res, token);
 
-    // Return user data
     const userWithoutPassword = user.toJSON();
 
     res.json({
@@ -595,15 +655,12 @@ exports.googleAuth = async (req, res) => {
   }
 };
 
-/**
- * UPDATE PROFILE - Update editable profile fields
- * PUT /api/auth/profile
- * Protected route - requires valid token in cookies
- */
+/* Update user profile information */
 exports.updateProfile = async (req, res) => {
   try {
     const user = await User.findById(req.userId);
 
+    /* Check user exists */
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -629,6 +686,8 @@ exports.updateProfile = async (req, res) => {
       photos,
     } = req.body;
 
+    /* Remove duplicates from arrays */
+    /* Remove duplicates from arrays */
     const normalizeStringArray = (value, maxItems = 12) => {
       if (!Array.isArray(value)) {
         return undefined;
@@ -640,10 +699,12 @@ exports.updateProfile = async (req, res) => {
         .slice(0, maxItems);
     };
 
+    /* Update first name if provided */
     if (firstName !== undefined) {
       user.firstName = String(firstName).trim() || user.firstName;
     }
 
+    /* Update last name if provided */
     if (lastName !== undefined) {
       user.lastName = String(lastName).trim() || user.lastName;
     }
@@ -662,6 +723,8 @@ exports.updateProfile = async (req, res) => {
       user.coverImage = value || null;
     }
 
+    /* Set profile theme from allowed */
+    /* Set profile theme from allowed */
     if (profileTheme !== undefined) {
       const allowedThemes = new Set(['sunset', 'ocean', 'forest', 'aurora']);
       const selectedTheme = String(profileTheme || '').trim().toLowerCase();
@@ -670,6 +733,8 @@ exports.updateProfile = async (req, res) => {
       }
     }
 
+    /* Update age with bounds */
+    /* Update age with bounds */
     if (age !== undefined) {
       const parsed = Number(age);
       user.age = Number.isFinite(parsed) ? Math.max(18, Math.min(120, parsed)) : null;
@@ -683,6 +748,8 @@ exports.updateProfile = async (req, res) => {
       user.instagramHandle = String(instagramHandle).replace('@', '').trim().slice(0, 40);
     }
 
+    /* Update travel styles array */
+    /* Update travel styles array */
     const normalizedTravelStyles = normalizeStringArray(travelStyles);
     if (normalizedTravelStyles !== undefined) {
       user.travelStyles = normalizedTravelStyles;
@@ -698,6 +765,8 @@ exports.updateProfile = async (req, res) => {
       user.languages = normalizedLanguages;
     }
 
+    /* Update visited countries list */
+    /* Update visited countries list */
     const normalizedCountries = normalizeStringArray(countriesVisited, 30);
     if (normalizedCountries !== undefined) {
       user.countriesVisited = normalizedCountries;
@@ -730,12 +799,11 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-/**
- * ADMIN - List users
- * GET /api/auth/admin/users
- */
+/* Get all users sorted by date */
+/* Get all users sorted by date */
 exports.listUsers = async (req, res) => {
   try {
+    /* Fetch and sort users */
     const users = await User.find().sort({ createdAt: -1 });
     return res.json({
       success: true,
@@ -751,15 +819,13 @@ exports.listUsers = async (req, res) => {
   }
 };
 
-/**
- * ADMIN - Block/unblock user
- * PATCH /api/auth/admin/users/:userId/block
- */
+/* Block or unblock user account */
 exports.setUserBlockStatus = async (req, res) => {
   try {
     const { userId } = req.params;
     const { isBlocked } = req.body;
 
+    /* Validate boolean status */
     if (typeof isBlocked !== 'boolean') {
       return res.status(400).json({
         success: false,
@@ -767,6 +833,7 @@ exports.setUserBlockStatus = async (req, res) => {
       });
     }
 
+    /* Prevent admin self-block */
     if (String(userId) === String(req.userId)) {
       return res.status(400).json({
         success: false,
@@ -774,6 +841,7 @@ exports.setUserBlockStatus = async (req, res) => {
       });
     }
 
+    /* Find target user */
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({
@@ -807,16 +875,13 @@ exports.setUserBlockStatus = async (req, res) => {
   }
 };
 
-/**
- * FOLLOW USER - Add user to current user's following list
- * POST /api/auth/follow/:userId
- * Protected route - requires valid token
- */
+/* Add user to followers list */
 exports.followUser = async (req, res) => {
   try {
     const { userId } = req.params;
     const currentUserId = req.userId;
 
+    /* Prevent self-follow */
     if (String(userId) === String(currentUserId)) {
       return res.status(400).json({
         success: false,
@@ -840,7 +905,6 @@ exports.followUser = async (req, res) => {
       });
     }
 
-    // Check if already following
     if (currentUser.following.includes(userId)) {
       return res.status(400).json({
         success: false,
@@ -848,17 +912,16 @@ exports.followUser = async (req, res) => {
       });
     }
 
+    /* Check if follow is mutual */
     const isFollowBack = (userToFollow.following || []).some((id) => String(id) === String(currentUserId));
 
-    // Add to following list
+    /* Add to following list */
     currentUser.following.push(userId);
     await currentUser.save();
 
-    // Add to followers list
     userToFollow.followers.push(currentUserId);
     await userToFollow.save();
 
-    // Create follow or follow-back notification
     if (isFollowBack) {
       await createFollowBackNotification(currentUserId, userId);
     } else {
@@ -880,16 +943,13 @@ exports.followUser = async (req, res) => {
   }
 };
 
-/**
- * UNFOLLOW USER - Remove user from current user's following list
- * POST /api/auth/unfollow/:userId
- * Protected route - requires valid token
- */
+/* Remove user from followers */
 exports.unfollowUser = async (req, res) => {
   try {
     const { userId } = req.params;
     const currentUserId = req.userId;
 
+    /* Prevent self-unfollow */
     if (String(userId) === String(currentUserId)) {
       return res.status(400).json({
         success: false,
@@ -913,7 +973,6 @@ exports.unfollowUser = async (req, res) => {
       });
     }
 
-    // Check if following
     if (!currentUser.following.includes(userId)) {
       return res.status(400).json({
         success: false,
@@ -921,11 +980,11 @@ exports.unfollowUser = async (req, res) => {
       });
     }
 
-    // Remove from following list
+    /* Remove from following */
     currentUser.following = currentUser.following.filter((id) => String(id) !== String(userId));
     await currentUser.save();
 
-    // Remove from followers list
+    /* Remove from followers */
     userToUnfollow.followers = userToUnfollow.followers.filter((id) => String(id) !== String(currentUserId));
     await userToUnfollow.save();
 

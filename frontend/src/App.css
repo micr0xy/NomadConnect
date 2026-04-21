@@ -40,7 +40,6 @@
   background: transparent;
 }
 
-/* Ensure motion div fills container */
 .app-content > div {
   display: flex;
   flex-direction: column;

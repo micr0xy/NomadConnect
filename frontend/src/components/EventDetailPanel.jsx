@@ -16,7 +16,6 @@ const EventDetailPanel = ({ isOpen, onClose, event, onEventUpdated, onEventDelet
   const [isCreator, setIsCreator] = useState(false);
   const [error, setError] = useState('');
 
-  // Check if current user is a participant
   useEffect(() => {
     if (event && userEmail) {
       const normalizedUserEmail = userEmail.toLowerCase();
@@ -155,7 +154,6 @@ const EventDetailPanel = ({ isOpen, onClose, event, onEventUpdated, onEventDelet
             </div>
           )}
 
-          {/* Action Buttons */}
           <div className="detail-actions">
             <div className="action-buttons">
               {!isUserParticipant ? (

@@ -41,7 +41,6 @@ const directMessageSchema = new mongoose.Schema(
   }
 );
 
-// Index for fast queries
 directMessageSchema.index({ groupId: 1, createdAt: 1 });
 directMessageSchema.index({ senderId: 1 });
 

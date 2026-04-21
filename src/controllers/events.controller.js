@@ -8,6 +8,7 @@ const {
   recommendEventsForUser,
 } = require('../services/eventNlp.service');
 
+/* Extract name from email address */
 const formatNameFromEmail = (email = '') => {
   const local = String(email).split('@')[0] || 'user';
   return local
@@ -15,6 +16,7 @@ const formatNameFromEmail = (email = '') => {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
+/* Build user profile lookup map */
 const buildSafeUserMap = (users = []) => {
   return users.reduce((acc, user) => {
     acc[String(user.email).toLowerCase()] = {
@@ -25,6 +27,7 @@ const buildSafeUserMap = (users = []) => {
   }, {});
 };
 
+/* Add user details to participants */
 const enrichParticipants = async (participants = []) => {
   const participantEmails = [...new Set(participants
     .map((participant) => String(participant.userEmail || participant.email || '').toLowerCase())
@@ -52,6 +55,7 @@ const enrichParticipants = async (participants = []) => {
   });
 };
 
+/* Attach participant info to event */
 const withEnrichedParticipants = async (eventDoc) => {
   if (!eventDoc) return eventDoc;
   const event = eventDoc.toObject ? eventDoc.toObject() : eventDoc;
@@ -62,6 +66,7 @@ const withEnrichedParticipants = async (eventDoc) => {
   };
 };
 
+/* Add user details to messages */
 const enrichMessages = async (messages = []) => {
   const messageEmails = [...new Set(messages
     .map((message) => String(message.userEmail || '').toLowerCase())
@@ -89,24 +94,13 @@ const enrichMessages = async (messages = []) => {
   });
 };
 
-/**
- * Create a new event (protected route)
- * POST /api/events
- * Body: {
- *   title: string (required, min 3)
- *   description: string (optional)
- *   startTime: ISO string (required, must be future)
- *   location: { lng: number, lat: number } (required)
- *   maxParticipants: number (optional, >=2 if provided)
- * }
- */
+/* Create new event with data */
 exports.createEvent = async (req, res) => {
   try {
     const { title, description, category, startTime, location, maxParticipants } = req.body;
-    const createdByEmail = req.userEmail; // Set by verifyToken middleware
+    const createdByEmail = req.userEmail;
     const validCategories = ['meetup', 'travel', 'adventure', 'cultural', 'food', 'sports', 'other'];
 
-    // Validate required fields
     if (!title || !category || !startTime || !location) {
       return res.status(400).json({
         success: false,
@@ -121,7 +115,6 @@ exports.createEvent = async (req, res) => {
       });
     }
 
-    // Validate title length
     if (title.trim().length < 3) {
       return res.status(400).json({
         success: false,
@@ -129,7 +122,6 @@ exports.createEvent = async (req, res) => {
       });
     }
 
-    // Validate startTime is future
     const startDate = new Date(startTime);
     if (isNaN(startDate.getTime())) {
       return res.status(400).json({
@@ -145,7 +137,6 @@ exports.createEvent = async (req, res) => {
       });
     }
 
-    // Validate location
     if (location.lng === undefined || location.lat === undefined) {
       return res.status(400).json({
         success: false,
@@ -153,7 +144,6 @@ exports.createEvent = async (req, res) => {
       });
     }
 
-    // Validate coordinates
     if (location.lng < -180 || location.lng > 180 || location.lat < -90 || location.lat > 90) {
       return res.status(400).json({
         success: false,
@@ -161,7 +151,6 @@ exports.createEvent = async (req, res) => {
       });
     }
 
-    // Validate maxParticipants if provided
     if (maxParticipants !== null && maxParticipants !== undefined && maxParticipants < 2) {
       return res.status(400).json({
         success: false,
@@ -169,7 +158,6 @@ exports.createEvent = async (req, res) => {
       });
     }
 
-    // Generate human-like description if missing or too short
     let finalDescription = description && description.trim().length >= 40
       ? description.trim()
       : generateHumanDescription({
@@ -181,7 +169,6 @@ exports.createEvent = async (req, res) => {
         time: startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
       });
 
-    // Create event with GeoJSON location
     const newEvent = new Event({
       title: title.trim(),
       description: finalDescription,
@@ -203,7 +190,6 @@ exports.createEvent = async (req, res) => {
 
     const savedEvent = await newEvent.save();
 
-    // Create event notifications for followers
     const creator = await User.findOne({ email: createdByEmail }).select('_id');
     if (creator) {
       await createEventNotification(savedEvent._id, creator._id);
@@ -224,15 +210,11 @@ exports.createEvent = async (req, res) => {
   }
 };
 
-/**
- * Improve event draft with NLP (protected route)
- * POST /api/events/nlp/improve
- */
+/* Improve event description with NLP */
 exports.improveEventDraft = async (req, res) => {
   try {
     const { title, description, category, date, time, maxParticipants } = req.body;
 
-    // Validate minimum input
     if (!title && !description) {
       return res.status(400).json({
         success: false,
@@ -240,7 +222,6 @@ exports.improveEventDraft = async (req, res) => {
       });
     }
 
-    // Use NLP service to improve
     const improved = improveEventDraftNLP({
       title: title || '',
       description: description || '',
@@ -264,10 +245,7 @@ exports.improveEventDraft = async (req, res) => {
   }
 };
 
-/**
- * Get all events (protected route)
- * GET /api/events
- */
+/* Get all events with filters */
 exports.getEvents = async (req, res) => {
   try {
     const events = await Event.find().sort({ startTime: 1 });
@@ -288,10 +266,7 @@ exports.getEvents = async (req, res) => {
   }
 };
 
-/**
- * Get NLP recommendations for current user
- * GET /api/events/recommendations
- */
+/* Get recommended events for user */
 exports.getRecommendedEvents = async (req, res) => {
   try {
     const limit = Math.max(1, Math.min(12, parseInt(req.query.limit, 10) || 6));
@@ -342,16 +317,12 @@ exports.getRecommendedEvents = async (req, res) => {
   }
 };
 
-/**
- * Join an event (protected route)
- * POST /api/events/:eventId/join
- */
+/* Add user to event */
 exports.joinEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
     const userEmail = req.userEmail;
 
-    // Find event
     const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({
@@ -360,7 +331,6 @@ exports.joinEvent = async (req, res) => {
       });
     }
 
-    // Ensure creator is treated as a participant even for legacy events.
     if (event.createdByEmail === userEmail) {
       const creatorAlreadyParticipant = event.participants.some(
         (p) => p.userEmail === userEmail
@@ -388,7 +358,6 @@ exports.joinEvent = async (req, res) => {
       });
     }
 
-    // Check if user already joined
     const alreadyJoined = event.participants.some(
       (p) => p.userEmail === userEmail
     );
@@ -399,7 +368,6 @@ exports.joinEvent = async (req, res) => {
       });
     }
 
-    // Check max participants limit
     if (event.maxParticipants && event.participants.length >= event.maxParticipants) {
       return res.status(400).json({
         success: false,
@@ -407,7 +375,6 @@ exports.joinEvent = async (req, res) => {
       });
     }
 
-    // Add user to participants
     event.participants.push({
       userEmail,
       joinedAt: new Date(),
@@ -436,16 +403,12 @@ exports.joinEvent = async (req, res) => {
   }
 };
 
-/**
- * Leave an event (protected route)
- * DELETE /api/events/:eventId/leave
- */
+/* Remove user from event */
 exports.leaveEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
     const userEmail = req.userEmail;
 
-    // Find event
     const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({
@@ -454,7 +417,6 @@ exports.leaveEvent = async (req, res) => {
       });
     }
 
-    // Prevent event creator from leaving their own event participant list.
     if (event.createdByEmail === userEmail) {
       return res.status(400).json({
         success: false,
@@ -462,7 +424,6 @@ exports.leaveEvent = async (req, res) => {
       });
     }
 
-    // Remove user from participants
     event.participants = event.participants.filter(
       (p) => p.userEmail !== userEmail
     );
@@ -490,10 +451,6 @@ exports.leaveEvent = async (req, res) => {
   }
 };
 
-/**
- * Delete an event (creator or admin)
- * DELETE /api/events/:eventId
- */
 exports.deleteEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -538,11 +495,7 @@ exports.deleteEvent = async (req, res) => {
   }
 };
 
-/**
- * Post a message in event chat (protected route)
- * POST /api/events/:eventId/messages
- * Body: { text: string, userName: string }
- */
+/* Send message to event */
 exports.postMessage = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -564,7 +517,6 @@ exports.postMessage = async (req, res) => {
       });
     }
 
-    // Verify event exists
     const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({
@@ -573,7 +525,6 @@ exports.postMessage = async (req, res) => {
       });
     }
 
-    // Verify user is participant or creator
     const isParticipant = event.participants.some(
       (p) => p.userEmail === userEmail
     );
@@ -586,7 +537,6 @@ exports.postMessage = async (req, res) => {
       });
     }
 
-    // Create message
     const message = new Message({
       eventId,
       userEmail,
@@ -618,10 +568,7 @@ exports.postMessage = async (req, res) => {
   }
 };
 
-/**
- * Get event chat messages (protected route)
- * GET /api/events/:eventId/messages
- */
+/* Get all event messages */
 exports.getMessages = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -629,7 +576,6 @@ exports.getMessages = async (req, res) => {
     const skip = parseInt(req.query.skip) || 0;
     const userEmail = req.userEmail;
 
-    // Verify event exists
     const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({
@@ -638,7 +584,6 @@ exports.getMessages = async (req, res) => {
       });
     }
 
-    // Verify user is participant or creator
     const isParticipant = event.participants.some(
       (p) => p.userEmail === userEmail
     );
@@ -651,13 +596,11 @@ exports.getMessages = async (req, res) => {
       });
     }
 
-    // Fetch messages
     const messages = await Message.find({ eventId })
       .sort({ createdAt: -1 })
       .limit(limit)
       .skip(skip);
 
-    // Reverse to show chronological order
     messages.reverse();
     const enrichedMessages = await enrichMessages(messages);
 
@@ -676,10 +619,6 @@ exports.getMessages = async (req, res) => {
   }
 };
 
-/**
- * Delete an event (protected route)
- * DELETE /api/events/:eventId
- */
 exports.deleteEvent = async (req, res) => {
   try {
     const { eventId } = req.params;

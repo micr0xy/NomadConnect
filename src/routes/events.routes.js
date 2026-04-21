@@ -14,31 +14,31 @@ const { verifyToken } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
-// POST /api/events - Create a new event (protected)
+/* Create new event */
 router.post('/', verifyToken, createEvent);
 
-// GET /api/events - Get all events (protected)
+/* Get all events */
 router.get('/', verifyToken, getEvents);
 
-// GET /api/events/recommendations - NLP recommendations for current user (protected)
+/* Get recommended events */
 router.get('/recommendations', verifyToken, getRecommendedEvents);
 
-// POST /api/events/nlp/improve - Improve event draft with NLP (protected)
+/* Improve event description */
 router.post('/nlp/improve', verifyToken, improveEventDraft);
 
-// POST /api/events/:eventId/join - Join an event (protected)
+/* Join event */
 router.post('/:eventId/join', verifyToken, joinEvent);
 
-// DELETE /api/events/:eventId/leave - Leave an event (protected)
+/* Leave event */
 router.delete('/:eventId/leave', verifyToken, leaveEvent);
 
-// DELETE /api/events/:eventId - Delete event (creator/admin, protected)
+/* Delete event */
 router.delete('/:eventId', verifyToken, deleteEvent);
 
-// POST /api/events/:eventId/messages - Post a message (protected)
+/* Send message */
 router.post('/:eventId/messages', verifyToken, postMessage);
 
-// GET /api/events/:eventId/messages - Get event messages (protected)
+/* Get messages */
 router.get('/:eventId/messages', verifyToken, getMessages);
 
 module.exports = router;

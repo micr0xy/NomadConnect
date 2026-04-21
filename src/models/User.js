@@ -119,13 +119,11 @@ const userSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // Adds createdAt and updatedAt
+    timestamps: true,
   }
 );
 
-// Hash password before saving
 userSchema.pre('save', async function () {
-  // Only hash if password is new or modified
   if (!this.isModified('passwordHash')) {
     return;
   }
@@ -138,12 +136,10 @@ userSchema.pre('save', async function () {
   }
 });
 
-// Method to compare passwords
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.passwordHash);
 };
 
-// Method to return user data without sensitive info
 userSchema.methods.toJSON = function () {
   const { passwordHash, ...userWithoutPassword } = this.toObject();
   return userWithoutPassword;

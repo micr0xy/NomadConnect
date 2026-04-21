@@ -51,20 +51,17 @@ const isAllowedOrigin = (origin) => {
   }
 };
 
-// Database connection
 connectDB();
 
-// Middleware
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow non-browser tools (e.g., curl/Postman) that send no origin.
     if (isAllowedOrigin(origin)) {
       return callback(null, true);
     }
 
     return callback(new Error(`CORS blocked for origin: ${origin}`));
   },
-  credentials: true, // Allow cookies to be sent with requests
+  credentials: true,
 }));
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
@@ -126,13 +123,11 @@ io.on('connection', (socket) => {
 
 app.set('io', io);
 
-// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/messages', messagesRoutes);
 
-// Health check route
 app.get('/health', (req, res) => {
   const dbStateMap = {
     0: 'disconnected',
@@ -148,7 +143,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 404 handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -156,7 +150,6 @@ app.use((req, res) => {
   });
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(err.status || 500).json({

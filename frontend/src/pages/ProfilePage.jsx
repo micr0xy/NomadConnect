@@ -107,6 +107,7 @@ export default function ProfilePage() {
   const [viewError, setViewError] = useState('')
   const [viewedProfile, setViewedProfile] = useState(null)
   const [isFollowing, setIsFollowing] = useState(false)
+  const [isFollowedBy, setIsFollowedBy] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
 
   const makeFormFromUser = (currentUser) => ({
@@ -153,9 +154,12 @@ export default function ProfilePage() {
         const profile = await getProfileByEmail(normalizedProfileEmail)
         setViewedProfile(profile)
         
-        // Check if current user is following this profile
-        if (user && profile?.followers) {
-          setIsFollowing(profile.followers.includes(user._id))
+        /* Check follow relationships */
+        if (user && profile) {
+          const currentUserFollowsViewed = profile.followers?.includes(user._id);
+          const viewedFollowsCurrentUser = profile.following?.includes(user._id);
+          setIsFollowing(currentUserFollowsViewed);
+          setIsFollowedBy(viewedFollowsCurrentUser);
         }
       } catch (error) {
         setViewError(typeof error === 'string' ? error : 'Failed to load profile')
@@ -227,14 +231,18 @@ export default function ProfilePage() {
       setFollowLoading(true)
       if (isFollowing) {
         await unfollowUser(viewedProfile._id)
-        setIsFollowing(false)
       } else {
         await followUser(viewedProfile._id)
-        setIsFollowing(true)
       }
-      // Refresh profile to get updated follower counts
+      /* Refresh profile to get updated follower/following status */
       const updatedProfile = await getProfileByEmail(normalizedProfileEmail)
       setViewedProfile(updatedProfile)
+      /* Check if current user is in the updated profile's followers (means we follow them) */
+      const currentUserFollowsViewed = updatedProfile.followers?.includes(user._id)
+      setIsFollowing(currentUserFollowsViewed)
+      /* Check if current user is in viewed profile's following (means they follow us) */
+      const viewedFollowsCurrentUser = updatedProfile.following?.includes(user._id)
+      setIsFollowedBy(viewedFollowsCurrentUser)
     } catch (error) {
       setSaveError(typeof error === 'string' ? error : 'Failed to update follow status')
     } finally {
@@ -528,9 +536,13 @@ export default function ProfilePage() {
                       <>
                         <FaUserCheck /> Following
                       </>
-                    ) : (
+                    ) : isFollowedBy ? (
                       <>
                         <FaUserPlus /> Follow Back
+                      </>
+                    ) : (
+                      <>
+                        <FaUserPlus /> Follow
                       </>
                     )}
                   </button>

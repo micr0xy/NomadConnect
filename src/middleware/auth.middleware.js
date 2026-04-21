@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+/* Verify JWT token from request */
 const verifyToken = async (req, res, next) => {
   try {
     const cookieToken = req.cookies?.token;
@@ -8,6 +9,7 @@ const verifyToken = async (req, res, next) => {
     const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
     const token = cookieToken || bearerToken;
 
+    /* Check token exists */
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -15,7 +17,6 @@ const verifyToken = async (req, res, next) => {
       });
     }
 
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const user = await User.findById(decoded.id).select('email role isBlocked');
@@ -33,7 +34,6 @@ const verifyToken = async (req, res, next) => {
       });
     }
 
-    // Attach user info to request
     req.userId = decoded.id;
     req.userEmail = user.email;
     req.userRole = user.role || 'user';

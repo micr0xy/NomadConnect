@@ -110,7 +110,6 @@ export default function NotificationIcon() {
             ? {
               ...n,
               isFollowingSender: !Boolean(n.isFollowingSender),
-              actionPerformed: !Boolean(n.isFollowingSender),
             }
             : n
         ))
@@ -241,7 +240,9 @@ export default function NotificationIcon() {
                           ? 'Following...'
                           : notif.isFollowingSender
                             ? 'Following'
-                            : 'Follow Back'}
+                            : notif.isFollowedBySender
+                              ? 'Follow Back'
+                              : 'Follow'}
                       </button>
                     )}
                   </div>

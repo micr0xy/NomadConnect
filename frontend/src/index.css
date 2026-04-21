@@ -5,7 +5,6 @@
 @tailwind utilities;
 
 @layer base {
-  /* ── Nature theme CSS variables ── */
   :root {
     --forest-950: #0a1a0d;
     --forest-900: #0f2d14;
@@ -19,14 +18,12 @@
     --earth-400:  #d4943a;
     --cream-100:  #fdf8ee;
     --cream-200:  #f8f0d8;
-    /* kept for dashboard/auth pages */
     --nomad-orange-600: #ea580c;
     --nomad-orange-700: #c2410c;
     --nomad-teal-500:   #14b8a6;
     --nomad-teal-600:   #0d9488;
   }
 
-  /* Smooth Scroll */
   html {
     scroll-behavior: smooth;
     height: 100%;
@@ -53,7 +50,6 @@
     overflow-x: hidden;
   }
 
-  /* Nature-themed scrollbar */
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: #f0fdf4; }
   ::-webkit-scrollbar-thumb { background: #3aad52; border-radius: 4px; }
@@ -73,13 +69,11 @@
   }
 }
 
-/* ── Landing page specific utilities ── */
 @layer utilities {
   .font-display {
     font-family: 'Cormorant Garamond', Georgia, serif;
   }
 
-  /* Grain texture overlay */
   .grain-overlay::after {
     content: '';
     position: absolute;
@@ -89,7 +83,6 @@
     z-index: 1;
   }
 
-  /* Marquee animation */
   .marquee-track {
     display: flex;
     animation: marquee-scroll 25s linear infinite;
